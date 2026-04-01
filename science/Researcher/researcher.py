@@ -2,7 +2,7 @@
 Researcher — AI-driven research workflow using Gemini agent pair.
 
 Workflow:
-  1. Analysis agent reads AnAge data, proposes and executes Analysis 1 (broad opening question)
+  1. Analysis agent reads the dataset, proposes and executes Analysis 1 (broad opening question)
   2. Analysis agent proposes and executes Analysis 2, motivated by findings from Analysis 1
   3. (Optional) Analysis 3, motivated by Analysis 2
   4. Critique agent reviews the full body of work as a coherent story
@@ -44,8 +44,8 @@ TOKEN_WARN_THRESHOLD = 5_000_000  # paid account
 
 # ── System prompts ─────────────────────────────────────────────────────────────
 
-ANALYSIS_SYSTEM = """You are a rigorous research scientist specialising in comparative biology and life-history theory.
-Your goal is to produce a coherent body of work — a sequence of analyses that build on each other and tell a compelling scientific story.
+ANALYSIS_SYSTEM = """You are a rigorous research scientist. Your goal is to produce a coherent body of work —
+a sequence of analyses that build on each other and tell a compelling scientific story.
 
 Rules:
 - Be specific and quantitative. Include effect sizes, p-values, confidence intervals.
@@ -57,7 +57,7 @@ Rules:
   no "in conclusion, this study has shown", no "fascinating", no "crucially", no "it is worth noting",
   no hollow throat-clearing phrases. Be direct, specific, and dry where appropriate. Let the results speak."""
 
-CRITIQUE_SYSTEM = """You are a senior academic reviewer at a biology journal. You are direct, exacting, and do not waste words.
+CRITIQUE_SYSTEM = """You are a senior academic reviewer at a peer-reviewed scientific journal. You are direct, exacting, and do not waste words.
 Do not open with pleasantries — begin immediately with your assessment.
 
 When reviewing analyses, assess:
@@ -77,13 +77,13 @@ When reviewing a poster, additionally assess:
 4. Is Act I tension preserved (finding + open question), or is Act II's answer leaked into Act I?
 5. Do the figures support the narrative in order, or are they decorative?
 6. Is there any text that could be cut without losing meaning?
-7. Would a biologist standing 3 feet away understand what was found?
+7. Would a scientist standing 3 feet away understand what was found?
 
 Be direct and constructive. Number every critique. Be specific — quote exact text that needs changing.
 End with: VERDICT: [ACCEPT / MINOR REVISION / MAJOR REVISION]"""
 
 POSTER_CRITIQUE_SYSTEM = """You are a science communication expert and conference poster judge with 20 years of experience
-evaluating research posters at international biology conferences.
+evaluating research posters at international scientific conferences.
 You care above all about clarity, narrative, and visual impact. You do not start with pleasantries.
 
 Evaluate this poster on:
@@ -103,34 +103,49 @@ End with: VERDICT: [ACCEPT / MINOR REVISION / MAJOR REVISION]"""
 
 def load_data_summary() -> str:
     import pandas as pd
-    df = pd.read_csv(DATA_FILE, sep="\t")
+
+    # Auto-detect delimiter
+    suffix = DATA_FILE.suffix.lower()
+    sep = "\t" if suffix in (".txt", ".tsv") else ","
+    df = pd.read_csv(DATA_FILE, sep=sep)
+
+    # Numeric columns summary
+    numeric_cols = df.select_dtypes(include="number").columns.tolist()
+    categorical_cols = df.select_dtypes(exclude="number").columns.tolist()
+
     lines = [
-        "Dataset: AnAge — Animal Ageing and Longevity Database (Build 15, 2023)",
-        f"Shape: {df.shape[0]} species × {df.shape[1]} columns",
+        f"Dataset file: {DATA_FILE.name}",
+        f"Shape: {df.shape[0]} rows × {df.shape[1]} columns",
         "",
         "=== COLUMNS ===",
         ", ".join(df.columns.tolist()),
         "",
-        "=== CLASS DISTRIBUTION ===",
-        df["Class"].value_counts().to_string(),
-        "",
         "=== MISSING DATA (%) ===",
         (df.isnull().mean() * 100).round(1).to_string(),
         "",
-        "=== LONGEVITY SUMMARY ===",
-        df["Maximum longevity (yrs)"].describe().to_string(),
-        "",
-        "=== TOP 10 LONGEST-LIVED ===",
-        df[["Common name", "Class", "Maximum longevity (yrs)"]]
-            .dropna()
-            .sort_values("Maximum longevity (yrs)", ascending=False)
-            .head(10)
-            .to_string(index=False),
-        "",
+    ]
+
+    if categorical_cols:
+        lines += [
+            "=== CATEGORICAL COLUMN DISTRIBUTIONS (top 10 values each) ===",
+        ]
+        for col in categorical_cols[:5]:  # limit to first 5 to avoid bloat
+            lines.append(f"-- {col} --")
+            lines.append(df[col].value_counts().head(10).to_string())
+            lines.append("")
+
+    if numeric_cols:
+        lines += [
+            "=== NUMERIC COLUMNS SUMMARY ===",
+            df[numeric_cols].describe().to_string(),
+            "",
+        ]
+
+    lines += [
         "=== SAMPLE ROWS (first 5) ===",
         df.head(5).to_string(),
         "",
-        "=== FULL DATA (tab-separated) ===",
+        "=== FULL DATA ===",
         df.to_csv(sep="\t", index=False),
     ]
     return "\n".join(lines)
@@ -382,7 +397,7 @@ def run(n_analyses: int = 2, critique_rounds: int = 2):
     print("="*60)
 
     # ── Load data ──────────────────────────────────────────────────────────────
-    print("\n[SETUP] Loading AnAge data...")
+    print(f"\n[SETUP] Loading data from {DATA_FILE.name}...")
     data_summary = load_data_summary()
     print(f"  Data loaded ({len(data_summary):,} chars)")
 
@@ -397,7 +412,7 @@ def run(n_analyses: int = 2, critique_rounds: int = 2):
 
         if i == 1:
             prompt = textwrap.dedent(f"""
-                Here is the AnAge dataset — raw biological data on animal ageing and life history.
+                Here is a raw dataset for analysis.
 
                 {data_summary}
 
@@ -406,8 +421,7 @@ def run(n_analyses: int = 2, critique_rounds: int = 2):
                 the central question and findings. Subsequent analyses will build on it.
 
                 1. Propose a specific, testable research question suitable for a bachelor's thesis or higher.
-                   Choose something interesting to a broad biology audience at a research institute.
-                   Think about what question will naturally lead to a deeper follow-up.
+                   Choose something scientifically interesting that will naturally lead to a deeper follow-up.
                 2. Design and execute an appropriate statistical analysis.
                 3. Write up the results in full:
                    - Background
@@ -427,7 +441,7 @@ def run(n_analyses: int = 2, critique_rounds: int = 2):
                 for j, (title, result) in enumerate(analyses, 1)
             ])
             prompt = textwrap.dedent(f"""
-                You are continuing a multi-part research project on the AnAge dataset.
+                You are continuing a multi-part research project on the provided dataset.
                 Here is the full dataset again for reference:
 
                 {data_summary}
@@ -488,14 +502,13 @@ def run(n_analyses: int = 2, critique_rounds: int = 2):
             "role": "user",
             "content": textwrap.dedent(f"""
                 Please critically review this multi-part research project (Round {round_num}).
-                The data source is the AnAge Animal Ageing and Longevity Database (4,645 species).
                 Evaluate it as a coherent body of work — does it tell a compelling scientific story?
 
                 {current_body}
 
                 Provide a numbered critique. Be specific. Cite exact claims that need support or correction.
                 Pay particular attention to: narrative coherence between analyses, statistical validity,
-                and what would make this poster-worthy for a biology institute audience.
+                and what would make this poster-worthy for a scientific conference audience.
                 End with: VERDICT: [ACCEPT / MINOR REVISION / MAJOR REVISION]
             """).strip()
         }]
@@ -544,7 +557,7 @@ def run(n_analyses: int = 2, critique_rounds: int = 2):
         "role": "user",
         "content": textwrap.dedent(f"""
             Now produce the final, polished research document — a synthesis of all {n_analyses} analyses.
-            This will be presented at a biology institute conference.
+            This will be presented at a scientific conference.
 
             Structure it as a single cohesive paper:
             - Abstract (150 words max)
@@ -558,7 +571,7 @@ def run(n_analyses: int = 2, critique_rounds: int = 2):
             - Limitations
 
             The document should stand alone. Include all key statistics.
-            Write for a broad biology audience — assume no prior context.
+            Write for a broad scientific audience — assume no prior context.
         """).strip()
     })
 
@@ -577,8 +590,8 @@ def run(n_analyses: int = 2, critique_rounds: int = 2):
     writeup_messages = [{
         "role": "user",
         "content": textwrap.dedent(f"""
-            Write a brief, accessible summary of the following research for a broad biology audience.
-            Assume they are scientists but not specialists in life-history theory.
+            Write a brief, accessible summary of the following research for a broad scientific audience.
+            Assume they are scientists but not specialists in this specific field.
 
             Requirements:
             - 400-600 words
@@ -618,7 +631,7 @@ def run(n_analyses: int = 2, critique_rounds: int = 2):
 # ── Entry point ────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="AI-driven multi-analysis research workflow on AnAge")
+    parser = argparse.ArgumentParser(description="AI-driven multi-analysis research workflow")
     parser.add_argument("--analyses", type=int, default=2, choices=[1, 2, 3],
                         help="Number of chained analyses (default: 2, max: 3)")
     parser.add_argument("--rounds", type=int, default=2,
