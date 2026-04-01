@@ -52,7 +52,10 @@ Rules:
 - Do not hallucinate statistics — work only from the data provided.
 - Each analysis must be clearly motivated by the previous one.
 - Acknowledge limitations honestly.
-- Write to the standard of a published paper, not a student report."""
+- Write to the standard of a published paper, not a student report.
+- Write like a human scientist, not an AI. Avoid AI slop: no "certainly!", no "it is important to note that",
+  no "in conclusion, this study has shown", no "fascinating", no "crucially", no "it is worth noting",
+  no hollow throat-clearing phrases. Be direct, specific, and dry where appropriate. Let the results speak."""
 
 CRITIQUE_SYSTEM = """You are a senior academic reviewer at a biology journal evaluating a multi-part research project.
 Your job is to assess the work as a whole — does it tell a coherent scientific story?
@@ -65,6 +68,7 @@ For each review, assess:
 5. Strength of interpretation and discussion
 6. What is missing — analyses, controls, or comparisons that would strengthen the story
 7. Any errors, overstatements, or hallucinations
+8. Any AI slop language — flag hollow phrases, over-hedging, or unnatural academic prose
 
 Be direct and constructive. Number your critiques. End with:
 VERDICT: [ACCEPT / MINOR REVISION / MAJOR REVISION]"""
