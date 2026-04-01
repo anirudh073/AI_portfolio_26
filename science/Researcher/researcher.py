@@ -154,6 +154,101 @@ def call_agent(client, model: str, system: str, messages: list[dict], label: str
     return text, tokens
 
 
+# ── Poster generation (standalone) ───────────────────────────────────────────
+
+def generate_poster(client, final_result: str, writeup_result: str, n_analyses: int, timestamp: str) -> Path:
+    """Generate the HTML conference poster. Can be called standalone for reruns."""
+    print(f"\n{'─'*60}")
+    print("  CONFERENCE POSTER (HTML)")
+    print(f"{'─'*60}")
+
+    poster_messages = [{
+        "role": "user",
+        "content": textwrap.dedent(f"""
+            Convert the following research into a self-contained HTML conference poster.
+            You MUST render all figures as actual interactive charts using Chart.js
+            (load from https://cdn.jsdelivr.net/npm/chart.js).
+            Do NOT use placeholder boxes or text descriptions for figures — every figure
+            must be a real <canvas> element with Chart.js code and the actual data values
+            from the research embedded as JavaScript arrays.
+
+            DESIGN REQUIREMENTS:
+            - A0 portrait format (841mm × 1189mm), print-ready
+            - Clean academic style: white background, two-column layout below the header
+            - Header: full-width banner with title (large, bold), authors, affiliation
+            - Colour scheme: deep navy (#1a2e4a) for headers, white text in header, black body text,
+              light grey (#f5f5f5) panel backgrounds, accent colour (#2e7d5e) for highlights
+            - Sections as distinct panels with subtle borders
+            - Font: system sans-serif stack, title 52px+, section headers 28px+, body 20px min,
+              figure captions 18px min
+            - All CSS in a <style> block; JS in <script> blocks — single file
+
+            POSTER DESIGN RULES (follow strictly):
+            - Must be readable from 3-4 feet away: body text minimum 20px, figure captions 18px min,
+              section headers 28px+, title 52px+
+            - Minimal text: bullet points only, no paragraphs outside "The Story" section.
+              Figures carry the story — text supports them.
+            - Every section heading must be DESCRIPTIVE, not generic.
+              BAD: "Results", "Introduction", "Conclusions"
+              GOOD: "Great apes outlive lesser apes — but size explains most of it",
+                    "Humans break the allometric rule entirely"
+            - Figures: large Chart.js charts with high contrast colours, thick lines/bars,
+              large axis labels (16px+), large tick labels. Each chart must have a bold
+              descriptive title above it and a one-sentence take-home caption below it.
+            - No dense tables. Use large-type callout numbers styled as prominent stat cards.
+
+            FIGURES TO RENDER (use real data from the synthesis):
+            1. Box plot or dot plot: Max longevity distribution for Hylobatidae vs Hominidae
+               (excluding Homo sapiens). Show individual species as dots if possible.
+            2. Scatter plot: log10(Adult Weight) vs log10(Max Longevity) for all non-human
+               hominoids. Show regression line. Plot Homo sapiens as a distinct outlier point
+               in a contrasting colour with a label.
+            3. Bar chart: Residual longevity (actual minus predicted) for each hominoid species.
+               Humans should tower above all others. Use contrasting colour for humans.
+
+            CONTENT STRUCTURE:
+            - HEADER PANEL (full width): Title · "AI Research Demo, NCBS Bangalore, 2026" ·
+              QR placeholder div (grey box, right side, labelled "Scan for full paper")
+            - LEFT COLUMN:
+                • Why this matters (3 bullets max)
+                • The Story: Act I / Act II (2 short punchy paragraphs)
+                • 2-3 large stat callout cards (big number + one-line explanation)
+            - RIGHT COLUMN:
+                • 3 Chart.js figures (as described above), each with descriptive title + caption
+                • What we conclude (4-5 bullets — findings stated as claims, not hedges)
+                • Where this leads (3 bullets — specific future directions)
+            - FOOTER (full width): Acknowledgements · "Data: AnAge Build 15, 2023" · small print
+
+            Output ONLY valid HTML. No markdown, no explanation, no code fences. Start with <!DOCTYPE html>.
+
+            === RESEARCH SYNTHESIS ===
+            {final_result}
+
+            === PLAIN-ENGLISH WRITEUP ===
+            {writeup_result}
+        """).strip()
+    }]
+
+    poster_html, tokens = call_agent(
+        client, ANALYSIS_MODEL, ANALYSIS_SYSTEM, poster_messages, "POSTER HTML"
+    )
+    print(f"  [POSTER HTML] ~{tokens:,} tokens used")
+
+    # Strip accidental markdown fences
+    poster_html = poster_html.strip()
+    if poster_html.startswith("```"):
+        poster_html = "\n".join(poster_html.splitlines()[1:])
+    if poster_html.endswith("```"):
+        poster_html = "\n".join(poster_html.splitlines()[:-1])
+
+    poster_path = OUTPUT_DIR / f"{timestamp}_poster.html"
+    with open(poster_path, "w") as f:
+        f.write(poster_html)
+    print(f"  → Saved: {poster_path}")
+    print(f"  → Open in browser, then File → Print → Save as PDF (A0, no margins)")
+    return poster_path
+
+
 # ── Main workflow ──────────────────────────────────────────────────────────────
 
 def run(n_analyses: int = 2, critique_rounds: int = 2):
@@ -387,84 +482,8 @@ def run(n_analyses: int = 2, critique_rounds: int = 2):
     save_output(f"{timestamp}_writeup.md", writeup_result)
     print_section("PLAIN-ENGLISH WRITEUP (preview)", writeup_result)
 
-    # ── Conference poster (HTML) ───────────────────────────────────────────────
-    print(f"\n{'─'*60}")
-    print("  CONFERENCE POSTER (HTML)")
-    print(f"{'─'*60}")
-
-    poster_messages = [{
-        "role": "user",
-        "content": textwrap.dedent(f"""
-            Convert the following research into a self-contained HTML conference poster.
-
-            DESIGN REQUIREMENTS:
-            - A0 portrait format (841mm × 1189mm), print-ready
-            - Clean academic style: white background, two-column layout below the header
-            - Header: full-width banner with title (large, bold), authors, affiliation
-            - Colour scheme: deep navy (#1a2e4a) for headers, white text in header, black body text,
-              light grey (#f5f5f5) panel backgrounds, accent colour (#2e7d5e) for highlights
-            - Sections as distinct panels with subtle borders
-            - Font: system sans-serif stack, title ~48px, section headers ~24px, body ~16px
-            - All CSS inline or in a <style> block — single file, no external dependencies
-
-            POSTER DESIGN RULES (follow strictly):
-            - Must be readable from 3-4 feet away: body text minimum 20px, figure captions 18px,
-              section headers 28px+, title 52px+
-            - Minimal text: use bullet points, not paragraphs. If a sentence can be cut, cut it.
-              The figures carry the story — text supports them, not the other way around.
-            - Every section heading must be DESCRIPTIVE, not generic.
-              BAD: "Results", "Introduction", "Conclusions"
-              GOOD: "Larger animals live longer — but not equally so", "Developmental pace, not
-              body temperature, drives longevity", "What this means for ageing research"
-            - Figures must be poster-optimised: large, simple, high contrast. Each figure placeholder
-              must specify: title (descriptive), x-axis, y-axis, key data shown, colour scheme,
-              and the single take-home message a viewer should get in 5 seconds.
-            - No dense tables. Use large-type callout numbers (e.g. "R² = 0.80") styled prominently
-              instead of tabular results where possible.
-
-            CONTENT STRUCTURE:
-            - HEADER PANEL (full width): Title · Authors · Affiliation · QR placeholder (grey box, right side)
-            - LEFT COLUMN:
-                • Why this matters (3 bullets max — each a complete thought, no filler)
-                • The Story: Act I / Act II (2 short punchy paragraphs, one per analysis)
-                • 2-3 large callout statistics (big number + one-line explanation)
-            - RIGHT COLUMN:
-                • Figures ({n_analyses + 1} figure placeholders — large grey boxes, each with a
-                  descriptive title, full axis/data spec, and 1-sentence take-home caption)
-                • What we conclude (4-5 bullets — each a finding, stated as a claim, not a hedge)
-                • Where this leads (3 bullets — specific future directions, not vague gestures)
-            - FOOTER (full width): Acknowledgements · Data source · small print
-
-            Output ONLY valid HTML. No markdown, no explanation, no code fences. Start with <!DOCTYPE html>.
-
-            === RESEARCH SYNTHESIS ===
-            {final_result}
-
-            === PLAIN-ENGLISH WRITEUP ===
-            {writeup_result}
-        """).strip()
-    }]
-
-    poster_html, tokens = call_agent(
-        client, ANALYSIS_MODEL, ANALYSIS_SYSTEM, poster_messages, "POSTER HTML"
-    )
-    total_tokens += tokens
-
-    # Strip any accidental markdown code fences
-    poster_html = poster_html.strip()
-    if poster_html.startswith("```"):
-        poster_html = "\n".join(poster_html.splitlines()[1:])
-    if poster_html.endswith("```"):
-        poster_html = "\n".join(poster_html.splitlines()[:-1])
-
-    poster_path = OUTPUT_DIR / f"{timestamp}_poster.html"
-    with open(poster_path, "w") as f:
-        f.write(poster_html)
-    print(f"  → Saved: {poster_path}")
-    print(f"  → Open in browser, then File → Print → Save as PDF (A0, no margins)")
-
-    # Also save text layout for reference
-    save_output(f"{timestamp}_poster_layout.md", poster_html[:500] + "\n\n[Full HTML saved as .html]")
+    poster_path = generate_poster(client, final_result, writeup_result, n_analyses, timestamp)
+    total_tokens += 0  # token count handled inside generate_poster, logged there
 
     # ── Summary ───────────────────────────────────────────────────────────────
     print(f"\n{'='*60}")
@@ -486,5 +505,31 @@ if __name__ == "__main__":
                         help="Number of chained analyses (default: 2, max: 3)")
     parser.add_argument("--rounds", type=int, default=2,
                         help="Number of critique rounds (default: 2)")
+    parser.add_argument("--poster-only", metavar="TIMESTAMP",
+                        help="Regenerate poster only from existing outputs (e.g. --poster-only 20260401_170011)")
     args = parser.parse_args()
-    run(n_analyses=args.analyses, critique_rounds=args.rounds)
+
+    if args.poster_only:
+        # Load existing synthesis and writeup, regenerate poster only
+        ts = args.poster_only
+        synthesis_file = OUTPUT_DIR / f"{ts}_final_synthesis.md"
+        writeup_file   = OUTPUT_DIR / f"{ts}_writeup.md"
+        if not synthesis_file.exists():
+            sys.exit(f"ERROR: {synthesis_file} not found. Check your timestamp.")
+        if not writeup_file.exists():
+            sys.exit(f"ERROR: {writeup_file} not found.")
+
+        final_result   = synthesis_file.read_text()
+        writeup_result = writeup_file.read_text()
+
+        load_dotenv(Path(__file__).parent.parent.parent / ".env")
+        client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+
+        # Infer n_analyses from existing files
+        n_analyses = sum(1 for f in OUTPUT_DIR.glob(f"{ts}_analysis_*.md"))
+        n_analyses = max(n_analyses, 1)
+
+        generate_poster(client, final_result, writeup_result, n_analyses, ts)
+        print(f"\n  Poster regenerated for run: {ts}")
+    else:
+        run(n_analyses=args.analyses, critique_rounds=args.rounds)
