@@ -407,17 +407,32 @@ def run(n_analyses: int = 2, critique_rounds: int = 2):
             - Font: system sans-serif stack, title ~48px, section headers ~24px, body ~16px
             - All CSS inline or in a <style> block — single file, no external dependencies
 
+            POSTER DESIGN RULES (follow strictly):
+            - Must be readable from 3-4 feet away: body text minimum 20px, figure captions 18px,
+              section headers 28px+, title 52px+
+            - Minimal text: use bullet points, not paragraphs. If a sentence can be cut, cut it.
+              The figures carry the story — text supports them, not the other way around.
+            - Every section heading must be DESCRIPTIVE, not generic.
+              BAD: "Results", "Introduction", "Conclusions"
+              GOOD: "Larger animals live longer — but not equally so", "Developmental pace, not
+              body temperature, drives longevity", "What this means for ageing research"
+            - Figures must be poster-optimised: large, simple, high contrast. Each figure placeholder
+              must specify: title (descriptive), x-axis, y-axis, key data shown, colour scheme,
+              and the single take-home message a viewer should get in 5 seconds.
+            - No dense tables. Use large-type callout numbers (e.g. "R² = 0.80") styled prominently
+              instead of tabular results where possible.
+
             CONTENT STRUCTURE:
             - HEADER PANEL (full width): Title · Authors · Affiliation · QR placeholder (grey box, right side)
             - LEFT COLUMN:
-                • Introduction (3-4 bullets)
-                • The Story (one paragraph per analysis, with a clear "Act I / Act II" label)
-                • Key Statistics (small table or highlighted numbers)
+                • Why this matters (3 bullets max — each a complete thought, no filler)
+                • The Story: Act I / Act II (2 short punchy paragraphs, one per analysis)
+                • 2-3 large callout statistics (big number + one-line explanation)
             - RIGHT COLUMN:
-                • Figures ({n_analyses + 1} figure placeholders — grey boxes with caption describing
-                  exactly what each figure should show: axes, data, take-home message)
-                • Conclusions (4-5 bullets)
-                • Future Directions (3-4 bullets)
+                • Figures ({n_analyses + 1} figure placeholders — large grey boxes, each with a
+                  descriptive title, full axis/data spec, and 1-sentence take-home caption)
+                • What we conclude (4-5 bullets — each a finding, stated as a claim, not a hedge)
+                • Where this leads (3 bullets — specific future directions, not vague gestures)
             - FOOTER (full width): Acknowledgements · Data source · small print
 
             Output ONLY valid HTML. No markdown, no explanation, no code fences. Start with <!DOCTYPE html>.
