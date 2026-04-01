@@ -174,25 +174,36 @@ def warn_tokens(total: int):
         print(f"     Monitor at: https://aistudio.google.com/")
 
 
-def call_agent(client, model: str, system: str, messages: list[dict], label: str) -> tuple[str, int]:
-    print(f"\n  [{label}] calling {model}...")
+def call_agent(client, model: str, system: str, messages: list[dict], label: str,
+               max_retries: int = 4) -> tuple[str, int]:
+    import time
     contents = []
     for m in messages:
         role = "user" if m["role"] == "user" else "model"
         contents.append(types.Content(role=role, parts=[types.Part(text=m["content"])]))
 
-    response = client.models.generate_content(
-        model=model,
-        contents=contents,
-        config=types.GenerateContentConfig(
-            system_instruction=system,
-            temperature=0.7,
-        ),
-    )
-    text = response.text
-    tokens = response.usage_metadata.total_token_count if response.usage_metadata else 0
-    print(f"  [{label}] done (~{tokens:,} tokens)")
-    return text, tokens
+    for attempt in range(1, max_retries + 1):
+        print(f"\n  [{label}] calling {model} (attempt {attempt}/{max_retries})...")
+        try:
+            response = client.models.generate_content(
+                model=model,
+                contents=contents,
+                config=types.GenerateContentConfig(
+                    system_instruction=system,
+                    temperature=0.7,
+                ),
+            )
+            text = response.text
+            tokens = response.usage_metadata.total_token_count if response.usage_metadata else 0
+            print(f"  [{label}] done (~{tokens:,} tokens)")
+            return text, tokens
+        except Exception as e:
+            if attempt == max_retries:
+                raise
+            wait = 15 * attempt  # 15s, 30s, 45s
+            print(f"  [{label}] error: {e}")
+            print(f"  [{label}] retrying in {wait}s...")
+            time.sleep(wait)
 
 
 # ── Poster generation (standalone) ───────────────────────────────────────────
