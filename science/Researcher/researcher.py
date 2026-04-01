@@ -37,10 +37,10 @@ DATA_FILE = Path(__file__).parent / "data" / "anage_data.txt"
 OUTPUT_DIR = Path(__file__).parent / "output"
 OUTPUT_DIR.mkdir(exist_ok=True)
 
-ANALYSIS_MODEL = "gemini-2.5-pro"
+ANALYSIS_MODEL = "gemini-3.1-pro-preview"
 CRITIQUE_MODEL = "gemini-2.5-pro"
 
-TOKEN_WARN_THRESHOLD = 1_000_000
+TOKEN_WARN_THRESHOLD = 5_000_000  # paid account
 
 # ── System prompts ─────────────────────────────────────────────────────────────
 
