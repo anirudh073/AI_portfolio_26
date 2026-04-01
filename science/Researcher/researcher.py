@@ -226,17 +226,30 @@ def generate_poster(client, final_result: str, writeup_result: str, n_analyses: 
               BAD: "Results" GOOD: "Great apes outlive lesser apes — body mass explains half of it"
             - No dense tables. Use large-type stat callout cards instead.
 
-            FIGURES (3 total, right column, use only verbatim data from synthesis):
-            1. Species-level dot plot: each hominoid species as a named point on y-axis,
-               x-axis = Max Longevity (years). Colour by family. Do not group by family row —
-               list every species by name. Homo sapiens excluded.
-            2. Scatter plot: log10(Adult Weight) vs log10(Max Longevity). Plot every non-human
-               hominoid as a named labelled point. Draw the OLS regression line. Plot Homo sapiens
-               (both absolute max and conservative 90yr) as red triangle outliers with labels.
-               Include a vertical annotation showing the predicted vs actual human lifespan gap.
-            3. Horizontal bar chart: residual longevity (actual minus predicted) per species,
-               sorted descending. Humans in red, all others in navy. Add a vertical reference
-               line at x=0 labelled "allometric prediction". Label each bar with the residual value.
+            FIGURE DESIGN RULES (apply to all figures, regardless of research topic):
+            - Prefer DIRECT LABELS on data points over legends. If the dataset is small enough
+              to label individually (n < 30), label each point/bar directly with its name.
+              If a legend is unavoidable, place it below the chart — never overlapping data — font 22px+.
+            - Use a CONSISTENT colour scheme across ALL figures. Assign one colour per group or
+              category and never deviate. The viewer should instantly know which colour means which
+              group without re-reading the legend each time.
+            - ALL figures must use a CONSISTENT dataset — every data point that appears in one
+              figure should be traceable across the others. Never silently drop data points between figures.
+            - Do not add derived summary markers (means, medians) on top of individual data points
+              unless the summary IS the point of the figure. Mixing raw and summary data in the
+              same figure adds visual clutter.
+            - Axis labels: 24px bold. Tick labels: 20px. Figure title: 28px bold above canvas.
+              Point radius: minimum 10px. Bar height: minimum 30px. Charts must be large enough
+              that all labels are readable without zooming.
+            - Each figure must have a single, self-evident take-home message. If a viewer cannot
+              state what the figure shows in one sentence, it is too complex — simplify it.
+
+            FIGURES ({n_analyses + 1} total, right column, derived from the synthesis):
+            Choose the most informative chart types for this specific research. The figures should
+            follow the same logical order as the narrative — each figure supports the corresponding
+            step in the story. Use only data values stated explicitly in the synthesis document.
+            Each figure needs: a descriptive title (the finding, not the variable), Chart.js canvas,
+            and a one-sentence caption below stating the take-home message.
 
             NARRATIVE FLOW — the poster must follow a logical sequence that a viewer can read
             left-to-right, top-to-bottom without prior context. Each panel should pose a question
