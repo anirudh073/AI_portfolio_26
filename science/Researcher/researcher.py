@@ -57,21 +57,47 @@ Rules:
   no "in conclusion, this study has shown", no "fascinating", no "crucially", no "it is worth noting",
   no hollow throat-clearing phrases. Be direct, specific, and dry where appropriate. Let the results speak."""
 
-CRITIQUE_SYSTEM = """You are a senior academic reviewer at a biology journal evaluating a multi-part research project.
-Your job is to assess the work as a whole — does it tell a coherent scientific story?
+CRITIQUE_SYSTEM = """You are a senior academic reviewer at a biology journal. You are direct, exacting, and do not waste words.
+Do not open with pleasantries — begin immediately with your assessment.
 
-For each review, assess:
+When reviewing analyses, assess:
 1. Scientific validity of each research question
 2. Whether each analysis is genuinely motivated by the previous one (narrative coherence)
-3. Appropriateness of statistical methods
-4. Quality and accuracy of results
+3. Appropriateness of statistical methods chosen
+4. Accuracy and precision of results — flag any overstatements or understatements
 5. Strength of interpretation and discussion
-6. What is missing — analyses, controls, or comparisons that would strengthen the story
-7. Any errors, overstatements, or hallucinations
-8. Any AI slop language — flag hollow phrases, over-hedging, or unnatural academic prose
+6. Missing analyses, controls, or comparisons that would strengthen the story
+7. Errors, overstatements, or hallucinations
+8. AI slop language — hollow phrases, over-hedging, unnatural academic prose
 
-Be direct and constructive. Number your critiques. End with:
-VERDICT: [ACCEPT / MINOR REVISION / MAJOR REVISION]"""
+When reviewing a poster, additionally assess:
+1. Narrative flow — can a first-time viewer follow the story in under 5 minutes?
+2. Is the central question clearly stated before the answer is given?
+3. Do headings state findings/claims, or are they generic labels?
+4. Is Act I tension preserved (finding + open question), or is Act II's answer leaked into Act I?
+5. Do the figures support the narrative in order, or are they decorative?
+6. Is there any text that could be cut without losing meaning?
+7. Would a biologist standing 3 feet away understand what was found?
+
+Be direct and constructive. Number every critique. Be specific — quote exact text that needs changing.
+End with: VERDICT: [ACCEPT / MINOR REVISION / MAJOR REVISION]"""
+
+POSTER_CRITIQUE_SYSTEM = """You are a science communication expert and conference poster judge with 20 years of experience
+evaluating research posters at international biology conferences.
+You care above all about clarity, narrative, and visual impact. You do not start with pleasantries.
+
+Evaluate this poster on:
+1. NARRATIVE FLOW: Does it guide the viewer from question → finding → implication in a logical sequence?
+2. QUESTION CLARITY: Is the central research question explicitly stated before the answer is given?
+3. HEADINGS: Are all headings descriptive claims/findings, or generic labels like "Results", "Introduction"?
+4. ACT STRUCTURE: Does Act I end with tension (finding + unanswered question)? Does Act II resolve it?
+5. TEXT ECONOMY: Is every sentence earning its space? Flag anything that can be cut.
+6. FIGURES: Do the figures tell the story in sequence? Are they self-explanatory with captions alone?
+7. READABILITY: Would someone standing 3-4 feet away understand the take-home message in 60 seconds?
+8. SCIENTIFIC ACCURACY: Are the claims on the poster consistent with the underlying research?
+
+Quote specific text when you flag issues. Number every critique.
+End with: VERDICT: [ACCEPT / MINOR REVISION / MAJOR REVISION]"""
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -212,18 +238,40 @@ def generate_poster(client, final_result: str, writeup_result: str, n_analyses: 
                sorted descending. Humans in red, all others in navy. Add a vertical reference
                line at x=0 labelled "allometric prediction". Label each bar with the residual value.
 
+            NARRATIVE FLOW (follow this exact logic — the viewer must be able to read left-to-right, top-to-bottom):
+            Panel 1 (top-left): THE QUESTION — frame what was asked, not how it was done.
+              "We asked whether extreme human longevity is a continuation of a great ape trend,
+               or a species-specific anomaly." Frame it as a question the viewer would find interesting.
+            Panel 2 (middle-left): THE STORY — two acts.
+              Act I: what we observed (the 14.6-year gap). End with TENSION: "but is this a
+              genuine anti-aging adaptation, or simply a side effect of being bigger?"
+              Do NOT resolve the tension in Act I — leave it as an open question.
+              Act II: how we resolved the tension (allometry explains apes, but not humans).
+              End with the revelation: humans are the anomaly.
+            Panel 3 (bottom-left): KEY NUMBERS — 3 stat cards, no LaTeX.
+            Right column: Figures 1→2→3 in the same order as the story (comparison → allometry → residuals).
+            Below figures: Conclusions (claims) + Future directions.
+
+            HEADING RULES — every heading must be a claim or finding:
+            BAD: "Why this matters" → GOOD: "Human aging is an unsolved evolutionary puzzle"
+            BAD: "The Story" → GOOD: "From ape divergence to human anomaly"
+            BAD: "What we conclude" → GOOD: "Great apes age by the rules — humans don't"
+            BAD: "Where this leads" → GOOD: "Three open questions this finding raises"
+            BAD: "Key Statistical Findings" → GOOD: "Three numbers that tell the story"
+
             CONTENT STRUCTURE:
-            - HEADER (full width): Title · "AI Research Demo, NCBS Bangalore, 2026" ·
-              QR placeholder (grey box, right, labelled "Scan for full paper")
-            - LEFT COLUMN:
-                • Why this matters (3 bullets max — complete thoughts, no filler)
-                • The Story: Act I / Act II (max 3 sentences each, under 30 words per sentence)
-                • 2-3 large stat callout cards (big number + one-line explanation, no LaTeX)
-            - RIGHT COLUMN:
-                • 3 Chart.js figures with descriptive title above and 1-sentence caption below
-                • What we conclude (4-5 bullets — stated as claims, not hedges)
-                • Where this leads (3 bullets — specific, not vague)
-            - FOOTER (full width): Acknowledgements · "Data: AnAge Build 15, 2023" · limitations
+            - HEADER (full width): Title (the conclusion, stated boldly) ·
+              "AI Research Demo, NCBS Bangalore, 2026" · QR placeholder right
+            - LEFT COLUMN (top to bottom):
+                • Panel: THE QUESTION (2-3 sentences framing what was asked and why it matters)
+                • Panel: THE STORY — Act I (observation + tension) / Act II (resolution + revelation)
+                  Max 3 sentences per Act. Under 30 words per sentence. No prose paragraphs — short punchy sentences.
+                • Panel: THREE NUMBERS THAT TELL THE STORY (3 stat callout cards, no LaTeX)
+            - RIGHT COLUMN (top to bottom):
+                • 3 Chart.js figures in narrative order, each with descriptive title + 1-sentence caption
+                • Conclusions panel (4-5 bullets — stated as claims)
+                • Future directions panel (3 bullets — specific next experiments)
+            - FOOTER (full width): Data · Limitations · Acknowledgements
 
             Output ONLY valid HTML. No markdown, no explanation, no code fences. Start with <!DOCTYPE html>.
 
@@ -250,7 +298,61 @@ def generate_poster(client, final_result: str, writeup_result: str, n_analyses: 
     poster_path = OUTPUT_DIR / f"{timestamp}_poster.html"
     with open(poster_path, "w") as f:
         f.write(poster_html)
-    print(f"  → Saved: {poster_path}")
+    print(f"  → Saved (v1): {poster_path}")
+
+    # ── Poster critique ────────────────────────────────────────────────────────
+    print(f"\n  [POSTER CRITIQUE] reviewing narrative and communication...")
+    poster_critique_messages = [{
+        "role": "user",
+        "content": textwrap.dedent(f"""
+            Review the following conference poster HTML for narrative flow, communication quality,
+            and scientific accuracy. Focus on whether a first-time viewer can follow the story.
+
+            === POSTER HTML ===
+            {poster_html}
+        """).strip()
+    }]
+
+    poster_critique, tokens = call_agent(
+        client, CRITIQUE_MODEL, POSTER_CRITIQUE_SYSTEM, poster_critique_messages, "POSTER CRITIQUE"
+    )
+    print(f"  [POSTER CRITIQUE] ~{tokens:,} tokens")
+    save_output(f"{timestamp}_poster_critique.md", poster_critique)
+    print_section("POSTER CRITIQUE (preview)", poster_critique)
+
+    # ── Poster revision ────────────────────────────────────────────────────────
+    print(f"\n  [POSTER REVISION] revising based on critique...")
+    poster_revision_messages = [
+        {"role": "user", "content": poster_messages[0]["content"]},
+        {"role": "model", "content": poster_html},
+        {"role": "user", "content": textwrap.dedent(f"""
+            A science communication expert has reviewed the poster:
+
+            === CRITIQUE ===
+            {poster_critique}
+            ================
+
+            Revise the poster HTML to address all critique points.
+            Pay special attention to: narrative flow, heading language, Act I/II tension structure.
+            Output ONLY valid HTML. No markdown, no explanation. Start with <!DOCTYPE html>.
+        """).strip()}
+    ]
+
+    poster_html_v2, tokens = call_agent(
+        client, ANALYSIS_MODEL, ANALYSIS_SYSTEM, poster_revision_messages, "POSTER REVISION"
+    )
+    print(f"  [POSTER REVISION] ~{tokens:,} tokens")
+
+    # Strip fences
+    poster_html_v2 = poster_html_v2.strip()
+    if poster_html_v2.startswith("```"):
+        poster_html_v2 = "\n".join(poster_html_v2.splitlines()[1:])
+    if poster_html_v2.endswith("```"):
+        poster_html_v2 = "\n".join(poster_html_v2.splitlines()[:-1])
+
+    with open(poster_path, "w") as f:
+        f.write(poster_html_v2)
+    print(f"  → Saved (v2, revised): {poster_path}")
     print(f"  → Open in browser, then File → Print → Save as PDF (A0, no margins)")
     return poster_path
 
