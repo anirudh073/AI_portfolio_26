@@ -352,42 +352,100 @@ def run(n_analyses: int = 2, critique_rounds: int = 2):
     save_output(f"{timestamp}_final_synthesis.md", final_result)
     print_section("FINAL SYNTHESIS (preview)", final_result)
 
-    # ── Conference poster ──────────────────────────────────────────────────────
+    # ── Plain-English writeup ──────────────────────────────────────────────────
     print(f"\n{'─'*60}")
-    print("  CONFERENCE POSTER")
+    print("  PLAIN-ENGLISH WRITEUP")
     print(f"{'─'*60}")
 
-    poster_messages = [{
+    writeup_messages = [{
         "role": "user",
         "content": textwrap.dedent(f"""
-            Convert the following research synthesis into a conference poster layout.
-            The poster will be presented at a biology institute to a broad scientific audience.
+            Write a brief, accessible summary of the following research for a broad biology audience.
+            Assume they are scientists but not specialists in life-history theory.
 
-            The poster must tell a clear story — the audience should be able to follow the
-            narrative arc from question → analyses → conclusion in under 5 minutes.
-
-            Use this structure:
-            - TITLE (punchy, max 15 words, should hint at the story's conclusion)
-            - AUTHORS & AFFILIATION: "AI Research Demo, NCBS Bangalore, 2026"
-            - INTRODUCTION (3-4 bullets: why does this question matter?)
-            - THE STORY IN THREE ACTS (one short paragraph per analysis: what we asked, what we found)
-            - KEY RESULTS (bullet points with the most important numbers from each analysis)
-            - FIGURES (describe {n_analyses + 1} figures: axes, what each shows, why it matters)
-            - CONCLUSIONS (4-5 bullets, one per key finding)
-            - FUTURE DIRECTIONS (3-4 concrete next steps)
-            - ACKNOWLEDGEMENTS
+            Requirements:
+            - 400-600 words
+            - No jargon — if a technical term is needed, explain it in plain English
+            - Tell it as a story: what question was asked, what was found, why it matters
+            - Highlight the most surprising or counterintuitive finding
+            - End with 2-3 sentences on what this opens up for future research
+            - Tone: engaging, like a Nature News & Views piece, not a textbook
 
             === RESEARCH SYNTHESIS ===
             {final_result}
         """).strip()
     }]
 
-    poster_result, tokens = call_agent(
-        client, ANALYSIS_MODEL, ANALYSIS_SYSTEM, poster_messages, "POSTER"
+    writeup_result, tokens = call_agent(
+        client, ANALYSIS_MODEL, ANALYSIS_SYSTEM, writeup_messages, "WRITEUP"
     )
     total_tokens += tokens
-    save_output(f"{timestamp}_poster_layout.md", poster_result)
-    print_section("POSTER LAYOUT (preview)", poster_result)
+    save_output(f"{timestamp}_writeup.md", writeup_result)
+    print_section("PLAIN-ENGLISH WRITEUP (preview)", writeup_result)
+
+    # ── Conference poster (HTML) ───────────────────────────────────────────────
+    print(f"\n{'─'*60}")
+    print("  CONFERENCE POSTER (HTML)")
+    print(f"{'─'*60}")
+
+    poster_messages = [{
+        "role": "user",
+        "content": textwrap.dedent(f"""
+            Convert the following research into a self-contained HTML conference poster.
+
+            DESIGN REQUIREMENTS:
+            - A0 portrait format (841mm × 1189mm), print-ready
+            - Clean academic style: white background, two-column layout below the header
+            - Header: full-width banner with title (large, bold), authors, affiliation
+            - Colour scheme: deep navy (#1a2e4a) for headers, white text in header, black body text,
+              light grey (#f5f5f5) panel backgrounds, accent colour (#2e7d5e) for highlights
+            - Sections as distinct panels with subtle borders
+            - Font: system sans-serif stack, title ~48px, section headers ~24px, body ~16px
+            - All CSS inline or in a <style> block — single file, no external dependencies
+
+            CONTENT STRUCTURE:
+            - HEADER PANEL (full width): Title · Authors · Affiliation · QR placeholder (grey box, right side)
+            - LEFT COLUMN:
+                • Introduction (3-4 bullets)
+                • The Story (one paragraph per analysis, with a clear "Act I / Act II" label)
+                • Key Statistics (small table or highlighted numbers)
+            - RIGHT COLUMN:
+                • Figures ({n_analyses + 1} figure placeholders — grey boxes with caption describing
+                  exactly what each figure should show: axes, data, take-home message)
+                • Conclusions (4-5 bullets)
+                • Future Directions (3-4 bullets)
+            - FOOTER (full width): Acknowledgements · Data source · small print
+
+            Output ONLY valid HTML. No markdown, no explanation, no code fences. Start with <!DOCTYPE html>.
+
+            === RESEARCH SYNTHESIS ===
+            {final_result}
+
+            === PLAIN-ENGLISH WRITEUP ===
+            {writeup_result}
+        """).strip()
+    }]
+
+    poster_html, tokens = call_agent(
+        client, ANALYSIS_MODEL, ANALYSIS_SYSTEM, poster_messages, "POSTER HTML"
+    )
+    total_tokens += tokens
+
+    # Strip any accidental markdown code fences
+    poster_html = poster_html.strip()
+    if poster_html.startswith("```"):
+        poster_html = "\n".join(poster_html.splitlines()[1:])
+    if poster_html.endswith("```"):
+        poster_html = "\n".join(poster_html.splitlines()[:-1])
+
+    poster_path = OUTPUT_DIR / f"{timestamp}_poster.html"
+    with open(poster_path, "w") as f:
+        f.write(poster_html)
+    print(f"  → Saved: {poster_path}")
+    print(f"  → Open in browser, then File → Print → Save as PDF (A0, no margins)")
+
+    # Also save text layout for reference
+    save_output(f"{timestamp}_poster_layout.md", poster_html[:500] + "\n\n[Full HTML saved as .html]")
 
     # ── Summary ───────────────────────────────────────────────────────────────
     print(f"\n{'='*60}")
