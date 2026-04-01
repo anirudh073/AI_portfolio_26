@@ -38,7 +38,7 @@ OUTPUT_DIR = Path(__file__).parent / "output"
 OUTPUT_DIR.mkdir(exist_ok=True)
 
 ANALYSIS_MODEL = "gemini-3.1-pro-preview"
-CRITIQUE_MODEL = "gemini-2.5-pro"
+CRITIQUE_MODEL = "gemini-3.1-pro-preview"
 
 TOKEN_WARN_THRESHOLD = 5_000_000  # paid account
 
@@ -166,58 +166,64 @@ def generate_poster(client, final_result: str, writeup_result: str, n_analyses: 
         "role": "user",
         "content": textwrap.dedent(f"""
             Convert the following research into a self-contained HTML conference poster.
-            You MUST render all figures as actual interactive charts using Chart.js
+            You MUST render all figures as actual charts using Chart.js
             (load from https://cdn.jsdelivr.net/npm/chart.js).
             Do NOT use placeholder boxes or text descriptions for figures — every figure
-            must be a real <canvas> element with Chart.js code and the actual data values
+            must be a real <canvas> element with Chart.js code and actual data values
             from the research embedded as JavaScript arrays.
 
+            STRICT DATA RULE: All chart data values must be taken verbatim from the synthesis
+            document. Do not estimate, round, or approximate any value. Do not invent data points.
+            If a specific species value is not explicitly stated in the synthesis, do not plot it.
+
+            STRICT HTML RULE: No LaTeX notation anywhere. No $...$ delimiters, no \\(...\\).
+            Write p=0.004, use R² (Unicode), <sup> tags for superscripts. Plain HTML only.
+
+            STRICT TEXT RULE: Outside of "The Story" section, use bullet points only — no prose.
+            "The Story" section: maximum 3 sentences per Act, each sentence under 30 words.
+
             DESIGN REQUIREMENTS:
-            - A0 portrait format (841mm × 1189mm), print-ready
+            - A0 portrait format — set .poster width to 841mm in CSS, but also add a viewport
+              scaling wrapper so it fits a 1920px-wide screen by default:
+              wrap .poster in a div.viewport-scaler with transform: scale(0.45); transform-origin: top left;
+              and add a note at the top: "Zoom out to see full poster / Print at A0 no margins"
             - Clean academic style: white background, two-column layout below the header
             - Header: full-width banner with title (large, bold), authors, affiliation
-            - Colour scheme: deep navy (#1a2e4a) for headers, white text in header, black body text,
-              light grey (#f5f5f5) panel backgrounds, accent colour (#2e7d5e) for highlights
-            - Sections as distinct panels with subtle borders
-            - Font: system sans-serif stack, title 52px+, section headers 28px+, body 20px min,
-              figure captions 18px min
-            - All CSS in a <style> block; JS in <script> blocks — single file
+            - Colour scheme: deep navy (#1a2e4a) headers, white header text, black body text,
+              light grey (#f5f5f5) panel backgrounds, accent (#2e7d5e) highlights
+            - Font: system sans-serif, title 90px+, section headers 40px+, body 28px+, captions 24px+
+            - All CSS in a <style> block; JS in <script> blocks — single file, no other dependencies
 
-            POSTER DESIGN RULES (follow strictly):
-            - Must be readable from 3-4 feet away: body text minimum 20px, figure captions 18px min,
-              section headers 28px+, title 52px+
-            - Minimal text: bullet points only, no paragraphs outside "The Story" section.
-              Figures carry the story — text supports them.
-            - Every section heading must be DESCRIPTIVE, not generic.
-              BAD: "Results", "Introduction", "Conclusions"
-              GOOD: "Great apes outlive lesser apes — but size explains most of it",
-                    "Humans break the allometric rule entirely"
-            - Figures: large Chart.js charts with high contrast colours, thick lines/bars,
-              large axis labels (16px+), large tick labels. Each chart must have a bold
-              descriptive title above it and a one-sentence take-home caption below it.
-            - No dense tables. Use large-type callout numbers styled as prominent stat cards.
+            POSTER DESIGN RULES:
+            - Readable from 3-4 feet: body 28px min, captions 24px min, headers 40px+, title 90px+
+            - Every heading DESCRIPTIVE not generic.
+              BAD: "Results" GOOD: "Great apes outlive lesser apes — body mass explains half of it"
+            - No dense tables. Use large-type stat callout cards instead.
 
-            FIGURES TO RENDER (use real data from the synthesis):
-            1. Box plot or dot plot: Max longevity distribution for Hylobatidae vs Hominidae
-               (excluding Homo sapiens). Show individual species as dots if possible.
-            2. Scatter plot: log10(Adult Weight) vs log10(Max Longevity) for all non-human
-               hominoids. Show regression line. Plot Homo sapiens as a distinct outlier point
-               in a contrasting colour with a label.
-            3. Bar chart: Residual longevity (actual minus predicted) for each hominoid species.
-               Humans should tower above all others. Use contrasting colour for humans.
+            FIGURES (3 total, right column, use only verbatim data from synthesis):
+            1. Species-level dot plot: each hominoid species as a named point on y-axis,
+               x-axis = Max Longevity (years). Colour by family. Do not group by family row —
+               list every species by name. Homo sapiens excluded.
+            2. Scatter plot: log10(Adult Weight) vs log10(Max Longevity). Plot every non-human
+               hominoid as a named labelled point. Draw the OLS regression line. Plot Homo sapiens
+               (both absolute max and conservative 90yr) as red triangle outliers with labels.
+               Include a vertical annotation showing the predicted vs actual human lifespan gap.
+            3. Horizontal bar chart: residual longevity (actual minus predicted) per species,
+               sorted descending. Humans in red, all others in navy. Add a vertical reference
+               line at x=0 labelled "allometric prediction". Label each bar with the residual value.
 
             CONTENT STRUCTURE:
-            - HEADER PANEL (full width): Title · "AI Research Demo, NCBS Bangalore, 2026" ·
-              QR placeholder div (grey box, right side, labelled "Scan for full paper")
+            - HEADER (full width): Title · "AI Research Demo, NCBS Bangalore, 2026" ·
+              QR placeholder (grey box, right, labelled "Scan for full paper")
             - LEFT COLUMN:
-                • Why this matters (3 bullets max)
-                • The Story: Act I / Act II (2 short punchy paragraphs)
-                • 2-3 large stat callout cards (big number + one-line explanation)
+                • Why this matters (3 bullets max — complete thoughts, no filler)
+                • The Story: Act I / Act II (max 3 sentences each, under 30 words per sentence)
+                • 2-3 large stat callout cards (big number + one-line explanation, no LaTeX)
             - RIGHT COLUMN:
-                • 3 Chart.js figures (as described above), each with descriptive title + caption
-                • What we conclude (4-5 bullets — findings stated as claims, not hedges)
-                • Where this leads (3 bullets — specific future directions)
-            - FOOTER (full width): Acknowledgements · "Data: AnAge Build 15, 2023" · small print
+                • 3 Chart.js figures with descriptive title above and 1-sentence caption below
+                • What we conclude (4-5 bullets — stated as claims, not hedges)
+                • Where this leads (3 bullets — specific, not vague)
+            - FOOTER (full width): Acknowledgements · "Data: AnAge Build 15, 2023" · limitations
 
             Output ONLY valid HTML. No markdown, no explanation, no code fences. Start with <!DOCTYPE html>.
 
