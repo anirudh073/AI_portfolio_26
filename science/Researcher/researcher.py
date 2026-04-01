@@ -90,7 +90,7 @@ Evaluate this poster on:
 1. NARRATIVE FLOW: Does it guide the viewer from question → finding → implication in a logical sequence?
 2. QUESTION CLARITY: Is the central research question explicitly stated before the answer is given?
 3. HEADINGS: Are all headings descriptive claims/findings, or generic labels like "Results", "Introduction"?
-4. ACT STRUCTURE: Does Act I end with tension (finding + unanswered question)? Does Act II resolve it?
+4. QUESTION-ANSWER LOGIC: Does each panel pose a question and answer it, leading naturally to the next? Is there any panel that answers before establishing the question?
 5. TEXT ECONOMY: Is every sentence earning its space? Flag anything that can be cut.
 6. FIGURES: Do the figures tell the story in sequence? Are they self-explanatory with captions alone?
 7. READABILITY: Would someone standing 3-4 feet away understand the take-home message in 60 seconds?
@@ -205,8 +205,8 @@ def generate_poster(client, final_result: str, writeup_result: str, n_analyses: 
             STRICT HTML RULE: No LaTeX notation anywhere. No $...$ delimiters, no \\(...\\).
             Write p=0.004, use R² (Unicode), <sup> tags for superscripts. Plain HTML only.
 
-            STRICT TEXT RULE: Outside of "The Story" section, use bullet points only — no prose.
-            "The Story" section: maximum 3 sentences per Act, each sentence under 30 words.
+            STRICT TEXT RULE: Use bullet points and short punchy sentences — no dense prose.
+            Narrative panels: max 3-4 sentences each, under 30 words per sentence.
 
             DESIGN REQUIREMENTS:
             - A0 portrait format — set .poster width to 841mm in CSS, but also add a viewport
@@ -238,38 +238,35 @@ def generate_poster(client, final_result: str, writeup_result: str, n_analyses: 
                sorted descending. Humans in red, all others in navy. Add a vertical reference
                line at x=0 labelled "allometric prediction". Label each bar with the residual value.
 
-            NARRATIVE FLOW (follow this exact logic — the viewer must be able to read left-to-right, top-to-bottom):
-            Panel 1 (top-left): THE QUESTION — frame what was asked, not how it was done.
-              "We asked whether extreme human longevity is a continuation of a great ape trend,
-               or a species-specific anomaly." Frame it as a question the viewer would find interesting.
-            Panel 2 (middle-left): THE STORY — two acts.
-              Act I: what we observed (the 14.6-year gap). End with TENSION: "but is this a
-              genuine anti-aging adaptation, or simply a side effect of being bigger?"
-              Do NOT resolve the tension in Act I — leave it as an open question.
-              Act II: how we resolved the tension (allometry explains apes, but not humans).
-              End with the revelation: humans are the anomaly.
-            Panel 3 (bottom-left): KEY NUMBERS — 3 stat cards, no LaTeX.
-            Right column: Figures 1→2→3 in the same order as the story (comparison → allometry → residuals).
-            Below figures: Conclusions (claims) + Future directions.
+            NARRATIVE FLOW — the poster must follow a logical sequence that a viewer can read
+            left-to-right, top-to-bottom without prior context. Each panel should pose a question
+            or make an observation, which is then answered or supported — leading naturally to the
+            next question. The final panel should leave the viewer with a clear take-home message
+            and a sense of what comes next.
 
-            HEADING RULES — every heading must be a claim or finding:
+            The flow should follow the logic of the research itself:
+            question → answer → this raises a new question → answer → implication.
+            Do not jump to conclusions before establishing the evidence. Do not repeat findings.
+            Each panel must earn its place by advancing the story.
+
+            HEADING RULES — every heading must be a descriptive claim or finding, never a label.
             BAD: "Why this matters" → GOOD: "Human aging is an unsolved evolutionary puzzle"
-            BAD: "The Story" → GOOD: "From ape divergence to human anomaly"
+            BAD: "Results" → GOOD: "Great apes outlive lesser apes — but body mass explains half of it"
             BAD: "What we conclude" → GOOD: "Great apes age by the rules — humans don't"
             BAD: "Where this leads" → GOOD: "Three open questions this finding raises"
-            BAD: "Key Statistical Findings" → GOOD: "Three numbers that tell the story"
+            BAD: "Key findings" → GOOD: "Three numbers that tell the story"
 
             CONTENT STRUCTURE:
             - HEADER (full width): Title (the conclusion, stated boldly) ·
               "AI Research Demo, NCBS Bangalore, 2026" · QR placeholder right
             - LEFT COLUMN (top to bottom):
-                • Panel: THE QUESTION (2-3 sentences framing what was asked and why it matters)
-                • Panel: THE STORY — Act I (observation + tension) / Act II (resolution + revelation)
-                  Max 3 sentences per Act. Under 30 words per sentence. No prose paragraphs — short punchy sentences.
-                • Panel: THREE NUMBERS THAT TELL THE STORY (3 stat callout cards, no LaTeX)
+                • Opening panel: frame the central question and why it matters (2-3 sentences)
+                • Narrative panels: walk through the research logic, one question-answer per panel,
+                  with each panel's answer naturally motivating the next question
+                • 3 stat callout cards (big number + one-line explanation, no LaTeX)
             - RIGHT COLUMN (top to bottom):
-                • 3 Chart.js figures in narrative order, each with descriptive title + 1-sentence caption
-                • Conclusions panel (4-5 bullets — stated as claims)
+                • 3 Chart.js figures in the same order as the narrative, each with descriptive title + 1-sentence caption
+                • Conclusions panel (4-5 bullets — stated as claims, not hedges)
                 • Future directions panel (3 bullets — specific next experiments)
             - FOOTER (full width): Data · Limitations · Acknowledgements
 
