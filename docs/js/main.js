@@ -191,15 +191,131 @@ async function navigateTo(url, { isHistoryNavigation = false } = {}) {
       history.pushState({}, "", nextUrl.href);
     }
 
+    await syncPageHead(parsed);
     document.title = parsed.title;
     currentShell.innerHTML = incomingShell.innerHTML;
     initializePage();
+    await executePageScripts(currentShell);
     scrollToNavigationTarget(nextUrl.hash);
   } catch (error) {
     window.location.href = nextUrl.href;
   } finally {
     pageNavigationInFlight = false;
   }
+}
+
+async function syncPageHead(parsed) {
+  document.body.className = parsed.body.className;
+  syncDescriptionMeta(parsed);
+
+  document.head.querySelectorAll("[data-page-asset='true']").forEach((node) => {
+    node.remove();
+  });
+
+  const pageAssets = Array.from(parsed.head.children).filter((node) => isPageSpecificHeadAsset(node));
+
+  for (const asset of pageAssets) {
+    const clone = document.createElement(asset.tagName.toLowerCase());
+
+    Array.from(asset.attributes).forEach((attribute) => {
+      clone.setAttribute(attribute.name, attribute.value);
+    });
+
+    clone.dataset.pageAsset = "true";
+    clone.textContent = asset.textContent;
+    document.head.appendChild(clone);
+
+    if (clone.tagName === "SCRIPT" && clone.src) {
+      await waitForAssetLoad(clone);
+    }
+  }
+}
+
+function syncDescriptionMeta(parsed) {
+  const incoming = parsed.head.querySelector("meta[name='description']");
+  const existing = document.head.querySelector("meta[name='description']");
+
+  if (incoming && existing) {
+    existing.setAttribute("content", incoming.getAttribute("content") || "");
+    return;
+  }
+
+  if (incoming && !existing) {
+    const clone = incoming.cloneNode(true);
+    document.head.appendChild(clone);
+    return;
+  }
+
+  if (!incoming && existing) {
+    existing.remove();
+  }
+}
+
+function isPageSpecificHeadAsset(node) {
+  if (!(node instanceof Element)) {
+    return false;
+  }
+
+  if (node.tagName === "STYLE") {
+    return true;
+  }
+
+  if (node.tagName === "SCRIPT" && node.src) {
+    const src = new URL(node.getAttribute("src") || "", window.location.href);
+    return !src.pathname.endsWith("/js/main.js");
+  }
+
+  return false;
+}
+
+async function executePageScripts(root) {
+  const scripts = Array.from(root.querySelectorAll("script"));
+
+  for (const oldScript of scripts) {
+    const newScript = document.createElement("script");
+
+    Array.from(oldScript.attributes).forEach((attribute) => {
+      newScript.setAttribute(attribute.name, attribute.value);
+    });
+
+    newScript.textContent = oldScript.textContent;
+    oldScript.replaceWith(newScript);
+
+    if (newScript.src) {
+      await waitForAssetLoad(newScript);
+    }
+  }
+}
+
+function waitForAssetLoad(node) {
+  if (node.tagName !== "SCRIPT" && node.tagName !== "LINK") {
+    return Promise.resolve();
+  }
+
+  return new Promise((resolve, reject) => {
+    const cleanup = () => {
+      node.removeEventListener("load", handleLoad);
+      node.removeEventListener("error", handleError);
+    };
+
+    const handleLoad = () => {
+      cleanup();
+      resolve();
+    };
+
+    const handleError = () => {
+      cleanup();
+      reject(new Error(`Failed to load ${node.tagName.toLowerCase()} asset`));
+    };
+
+    node.addEventListener("load", handleLoad, { once: true });
+    node.addEventListener("error", handleError, { once: true });
+
+    if (node.tagName === "SCRIPT" && !node.src) {
+      cleanup();
+      resolve();
+    }
+  });
 }
 
 function scrollToNavigationTarget(hash) {

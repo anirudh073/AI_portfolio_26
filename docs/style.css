@@ -908,7 +908,8 @@ button,
 .showroom-panel,
 .comparison-panel,
 .method-panel,
-.poster-showcase {
+.poster-showcase,
+.simulation-showcase {
   border: 3px solid var(--line);
   border-radius: calc(var(--radius) + 2px);
   background: rgba(255, 255, 255, 0.97);
@@ -1161,7 +1162,8 @@ button,
 .showroom-panel,
 .comparison-panel,
 .method-panel,
-.poster-showcase {
+.poster-showcase,
+.simulation-showcase {
   padding: 1rem;
 }
 
@@ -1425,6 +1427,31 @@ button,
   font-weight: 700;
 }
 
+.simulation-frame-wrap {
+  overflow: hidden;
+  margin-top: 1rem;
+  border: 3px solid var(--line);
+  border-radius: 20px;
+  background: #0b0b0b;
+  box-shadow: var(--shadow-small);
+}
+
+.simulation-frame {
+  display: block;
+  width: 100%;
+  min-height: 760px;
+  border: 0;
+  background: #0b0b0b;
+}
+
+.simulation-caption {
+  margin: 1rem 0 0;
+  padding-top: 1rem;
+  border-top: 2px dashed rgba(17, 17, 17, 0.35);
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
 .method-panel {
   margin-top: 1rem;
 }
@@ -1638,6 +1665,7 @@ button,
   .comparison-panel,
   .method-panel,
   .poster-showcase,
+  .simulation-showcase,
   .detail-copy,
   .detail-media,
   .resource-panel,
@@ -1697,5 +1725,9 @@ button,
   .showroom-stage-placeholder,
   .chat-log {
     min-height: 300px;
+  }
+
+  .simulation-frame {
+    min-height: 520px;
   }
 }

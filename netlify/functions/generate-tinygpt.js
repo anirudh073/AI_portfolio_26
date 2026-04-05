@@ -1,54 +1,51 @@
 exports.handler = async (event) => {
   const headers = {
     "Content-Type": "application/json",
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Headers": "Content-Type",
   };
 
   if (event.httpMethod === "OPTIONS") {
-    return {
-      statusCode: 204,
-      headers,
-    };
+    return { statusCode: 204, headers };
   }
 
   if (event.httpMethod !== "POST") {
+    return { statusCode: 405, headers, body: JSON.stringify({ error: "POST only." }) };
+  }
+
+  const baseUrl = process.env.INFERENCE_BASE_URL;
+  if (!baseUrl) {
     return {
-      statusCode: 405,
+      statusCode: 503,
       headers,
-      body: JSON.stringify({ error: "POST only, tiny titan." }),
+      body: JSON.stringify({
+        error: "Model server offline. The operator has stepped away from their laptop!!!",
+      }),
     };
   }
 
   let payload = {};
-
   try {
     payload = JSON.parse(event.body || "{}");
-  } catch (error) {
-    return {
-      statusCode: 400,
-      headers,
-      body: JSON.stringify({ error: "Invalid JSON payload." }),
-    };
+  } catch {
+    return { statusCode: 400, headers, body: JSON.stringify({ error: "Invalid JSON." }) };
   }
 
-  const prompt = typeof payload.prompt === "string" ? payload.prompt.trim() : "";
-  const temperature = Number(payload.temperature ?? 0.8);
-  const maxTokens = Number(payload.max_tokens ?? 100);
+  try {
+    const response = await fetch(`${baseUrl}/generate/tinygpt`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(30000),
+    });
 
-  // TODO: Load an exported ONNX/WebAssembly model or proxy this request to a
-  // Python inference service that runs the real TinyGPT model.
-  const output = [
-    "TinyGPT placeholder response incoming at an unreasonable volume!!!",
-    "",
-    `Prompt received: "${prompt || "Give me something delightfully compact!"}"`,
-    `Heat Level™: ${Number.isFinite(temperature) ? temperature.toFixed(1) : "0.8"}`,
-    `Word Flood: ${Number.isFinite(maxTokens) ? Math.round(maxTokens) : 100}`,
-    "",
-    "Replace this stub with real TinyGPT inference when the model runtime is ready."
-  ].join("\n");
-
-  return {
-    statusCode: 200,
-    headers,
-    body: JSON.stringify({ output }),
-  };
+    const data = await response.json();
+    return { statusCode: response.status, headers, body: JSON.stringify(data) };
+  } catch (err) {
+    return {
+      statusCode: 502,
+      headers,
+      body: JSON.stringify({ error: `Could not reach model server: ${err.message}` }),
+    };
+  }
 };
