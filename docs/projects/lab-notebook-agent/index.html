@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lab Notebook Agent | BrainBlast™</title>
+    <meta
+      name="description"
+      content="A local agentic pipeline that reads raw lab notes and distils them into crisp monthly summaries using a local LLM — no cloud required!"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../style.css" />
+    <script defer src="../../js/main.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+      /* ── Notebook demo layout ── */
+      .notebook-demo {
+        display: grid;
+        gap: 1rem;
+        grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+        border: 3px solid var(--line);
+        border-radius: calc(var(--radius) + 2px);
+        background: rgba(255, 255, 255, 0.97);
+        box-shadow: var(--shadow);
+        padding: 1rem;
+      }
+
+      /* Left column: file explorer + inline viewer */
+      .nb-left {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+
+      .nb-explorer {
+        border: 3px solid var(--line);
+        border-radius: var(--radius);
+        background: #fffdf4;
+        overflow: hidden;
+      }
+
+      .nb-explorer-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+        padding: 0.75rem 1rem;
+        border-bottom: 3px solid var(--line);
+        background: linear-gradient(90deg, rgba(255, 215, 0, 0.75), rgba(232, 0, 45, 0.2));
+      }
+
+      .nb-week-group {
+        border-bottom: 2px solid rgba(17, 17, 17, 0.12);
+      }
+      .nb-week-group:last-child {
+        border-bottom: none;
+      }
+
+      .nb-week-label {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        width: 100%;
+        padding: 0.55rem 1rem;
+        border: none;
+        background: rgba(255, 215, 0, 0.18);
+        font-family: "Bebas Neue", sans-serif;
+        font-size: 1.1rem;
+        letter-spacing: 0.05em;
+        text-align: left;
+        cursor: default;
+      }
+
+      .nb-week-label .week-arrow {
+        font-size: 0.8rem;
+        transition: transform 180ms ease;
+      }
+
+      .nb-file-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+
+      .nb-file-btn {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        width: 100%;
+        padding: 0.45rem 1rem 0.45rem 1.5rem;
+        border: none;
+        background: transparent;
+        font-family: "Inter", sans-serif;
+        font-size: 0.9rem;
+        font-weight: 700;
+        text-align: left;
+        cursor: pointer;
+        transition: background 150ms ease;
+      }
+
+      .nb-file-btn:hover {
+        background: rgba(255, 215, 0, 0.3);
+      }
+
+      .nb-file-btn.is-active {
+        background: rgba(255, 215, 0, 0.55);
+      }
+
+      .nb-file-btn::before {
+        content: "📄";
+        font-size: 0.85rem;
+      }
+
+      /* Inline file viewer */
+      .nb-viewer {
+        flex: 1;
+        min-height: 280px;
+        border: 3px solid var(--line);
+        border-radius: var(--radius);
+        background: #181818;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .nb-viewer-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.65rem 1rem;
+        border-bottom: 3px solid var(--line);
+        background: linear-gradient(90deg, rgba(255, 215, 0, 0.75), rgba(232, 0, 45, 0.2));
+      }
+
+      .nb-viewer-filename {
+        font-family: "Bebas Neue", sans-serif;
+        font-size: 1.1rem;
+        letter-spacing: 0.05em;
+      }
+
+      .nb-viewer-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 1rem;
+        color: #e8e8e0;
+        font-family: "Inter", monospace;
+        font-size: 0.85rem;
+        line-height: 1.65;
+        white-space: pre-wrap;
+      }
+
+      .nb-viewer-body .placeholder-text {
+        color: rgba(255, 255, 255, 0.3);
+        font-style: italic;
+      }
+
+      /* Right column: monthly summary */
+      .nb-right {
+        border: 3px solid var(--line);
+        border-radius: var(--radius);
+        background: #ffffff;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .nb-summary-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.75rem 1rem;
+        border-bottom: 3px solid var(--line);
+        background: linear-gradient(90deg, rgba(255, 215, 0, 0.75), rgba(232, 0, 45, 0.2));
+      }
+
+      .nb-summary-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 1.2rem 1.4rem;
+        max-height: 640px;
+        font-size: 0.92rem;
+        line-height: 1.7;
+      }
+
+      .nb-summary-body h2 {
+        font-family: "Bebas Neue", sans-serif;
+        font-size: 1.5rem;
+        letter-spacing: 0.04em;
+        margin: 1.2rem 0 0.4rem;
+        border-bottom: 2px solid var(--line);
+        padding-bottom: 0.25rem;
+      }
+
+      .nb-summary-body h3 {
+        font-family: "Bebas Neue", sans-serif;
+        font-size: 1.15rem;
+        letter-spacing: 0.03em;
+        margin: 0.9rem 0 0.3rem;
+      }
+
+      .nb-summary-body p {
+        margin: 0 0 0.7rem;
+      }
+
+      .nb-summary-body ul, .nb-summary-body ol {
+        margin: 0 0 0.7rem 1.2rem;
+        padding: 0;
+      }
+
+      .nb-summary-body li {
+        margin-bottom: 0.35rem;
+      }
+
+      .nb-summary-body strong {
+        font-weight: 800;
+      }
+
+      /* How It Works section */
+      .how-it-works {
+        margin-top: 1.5rem;
+        border: 3px solid var(--line);
+        border-radius: calc(var(--radius) + 2px);
+        background: rgba(255, 255, 255, 0.97);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+
+      .hiw-head {
+        padding: 0.85rem 1.2rem;
+        border-bottom: 3px solid var(--line);
+        background: linear-gradient(90deg, rgba(255, 215, 0, 0.75), rgba(232, 0, 45, 0.2));
+      }
+
+      .hiw-steps {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 0;
+      }
+
+      .hiw-step {
+        padding: 1.2rem 1.1rem;
+        border-right: 3px solid var(--line);
+        position: relative;
+      }
+
+      .hiw-step:last-child {
+        border-right: none;
+      }
+
+      .hiw-step-num {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.2rem;
+        height: 2.2rem;
+        border: 3px solid var(--line);
+        border-radius: 50%;
+        background: var(--yellow);
+        font-family: "Bebas Neue", sans-serif;
+        font-size: 1.3rem;
+        margin-bottom: 0.6rem;
+      }
+
+      .hiw-step-title {
+        font-family: "Bebas Neue", sans-serif;
+        font-size: 1.25rem;
+        letter-spacing: 0.04em;
+        margin: 0 0 0.4rem;
+      }
+
+      .hiw-step-body {
+        font-size: 0.88rem;
+        font-weight: 600;
+        line-height: 1.6;
+        margin: 0;
+      }
+
+      .hiw-step-code {
+        display: block;
+        margin-top: 0.5rem;
+        padding: 0.4rem 0.65rem;
+        border: 2px solid var(--line);
+        border-radius: 8px;
+        background: #181818;
+        color: #e8e8e0;
+        font-family: monospace;
+        font-size: 0.82rem;
+        white-space: pre-wrap;
+      }
+
+      /* Responsive */
+      @media (max-width: 900px) {
+        .notebook-demo {
+          grid-template-columns: 1fr;
+        }
+
+        .nb-right {
+          max-height: 420px;
+        }
+
+        .hiw-steps {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .hiw-step:nth-child(2) {
+          border-right: none;
+        }
+
+        .hiw-step:nth-child(1),
+        .hiw-step:nth-child(2) {
+          border-bottom: 3px solid var(--line);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="site-shell">
+      <div class="ticker" aria-label="BrainBlast hype ticker">
+        <div class="ticker-track">
+          <span>✦ LOCAL AI — NO CLOUD NEEDED ✦ YOUR NOTES STAY YOUR NOTES ✦ POWERED BY OLLAMA ✦</span>
+          <span>✦ SUMMARIES DELIVERED FASTER THAN YOU CAN REREAD YOUR OWN WRITING ✦ CALL 1-800-BRAINIO ✦</span>
+          <span>✦ LOCAL AI — NO CLOUD NEEDED ✦ YOUR NOTES STAY YOUR NOTES ✦ POWERED BY OLLAMA ✦</span>
+          <span>✦ SUMMARIES DELIVERED FASTER THAN YOU CAN REREAD YOUR OWN WRITING ✦ CALL 1-800-BRAINIO ✦</span>
+        </div>
+      </div>
+
+      <header class="masthead">
+        <div class="container masthead-row">
+          <div class="brand-block">
+            <a class="logo-mark" href="../../index.html" aria-label="BrainBlast home">
+              Brain<span class="accent">Blast™</span>
+            </a>
+            <p class="tagline">THE FUTURE IS HERE AND IT'S ON SALE!!!</p>
+          </div>
+          <div class="masthead-side">
+            <div class="hotline">CALL 1-800-BRAINIO</div>
+            <p class="support-copy">If it summarises your entire month in 30 seconds, that is a feature not a flaw!!!</p>
+          </div>
+        </div>
+      </header>
+
+      <main>
+        <section class="detail-hero">
+          <div class="container">
+            <a class="back-link" href="../../index.html">← Back To Catalogue</a>
+            <div class="detail-panel">
+              <div>
+                <div class="detail-meta">
+                  <span class="sku">SKU: BB-0007</span>
+                  <span class="category-badge category-good">GOOD</span>
+                  <span class="stock-pill stock-in">In Stock</span>
+                </div>
+                <h1 class="detail-title">Lab Notebook Agent</h1>
+                <p class="detail-lead">
+                  A fully local agentic pipeline that walks your research diary, feeds
+                  daily entries to a local LLM (Ollama + Gemma 3), and churns out crisp
+                  monthly summaries — automatically, privately, and for free!!!
+                </p>
+                <div class="detail-price">
+                  <span class="price-old">$299.99</span>
+                  <span class="price-free">Yours For Free!</span>
+                </div>
+                <div class="action-links">
+                  <a
+                    class="button-link primary"
+                    href="https://github.com/anirudh073/AI_portfolio_26/tree/main/agents/lab-notebook-summariser"
+                    target="_blank"
+                    rel="noreferrer"
+                    >View Source Code</a
+                  >
+                  <a
+                    class="button-link secondary"
+                    href="https://github.com/anirudh073/AI_portfolio_26/blob/main/agents/lab-notebook-summariser/summarise.py"
+                    target="_blank"
+                    rel="noreferrer"
+                    >Open Agent Script</a
+                  >
+                </div>
+              </div>
+
+              <aside class="panel-box">
+                <h2 class="panel-title">Product Highlights</h2>
+                <ul class="highlights-list">
+                  <li>100% local — data never leaves your machine!</li>
+                  <li>Agentic loop: discovers, reads, prompts, and writes automatically!</li>
+                  <li>Smart skip logic — never overwrites a summary you already have!</li>
+                  <li>Works on any month, any week, or the whole archive in one command!</li>
+                </ul>
+              </aside>
+            </div>
+          </div>
+        </section>
+
+        <section class="media-section">
+          <div class="container">
+            <div class="notebook-demo">
+
+              <!-- LEFT: file explorer + viewer -->
+              <div class="nb-left">
+                <div class="nb-explorer">
+                  <div class="nb-explorer-head">
+                    <span class="showroom-kicker">RAW NOTES — OCT 2025</span>
+                    <div class="terminal-lights" aria-hidden="true">
+                      <span></span><span></span><span></span>
+                    </div>
+                  </div>
+
+                  <!-- Week 1 -->
+                  <div class="nb-week-group">
+                    <div class="nb-week-label">📁 Week 1</div>
+                    <ul class="nb-file-list">
+                      <li><button class="nb-file-btn" data-file="01_10_25">01_10_25.md</button></li>
+                      <li><button class="nb-file-btn" data-file="03_10_25">03_10_25.md</button></li>
+                      <li><button class="nb-file-btn" data-file="06_10_25">06_10_25.md</button></li>
+                    </ul>
+                  </div>
+                  <!-- Week 2 -->
+                  <div class="nb-week-group">
+                    <div class="nb-week-label">📁 Week 2</div>
+                    <ul class="nb-file-list">
+                      <li><button class="nb-file-btn" data-file="08_10_25">08_10_25.md</button></li>
+                      <li><button class="nb-file-btn" data-file="10_10_25">10_10_25.md</button></li>
+                      <li><button class="nb-file-btn" data-file="13_10_25">13_10_25.md</button></li>
+                    </ul>
+                  </div>
+                  <!-- Week 3 -->
+                  <div class="nb-week-group">
+                    <div class="nb-week-label">📁 Week 3</div>
+                    <ul class="nb-file-list">
+                      <li><button class="nb-file-btn" data-file="15_10_25">15_10_25.md</button></li>
+                      <li><button class="nb-file-btn" data-file="18_10_25">18_10_25.md</button></li>
+                    </ul>
+                  </div>
+                  <!-- Week 4 -->
+                  <div class="nb-week-group">
+                    <div class="nb-week-label">📁 Week 4</div>
+                    <ul class="nb-file-list">
+                      <li><button class="nb-file-btn" data-file="22_10_25">22_10_25.md</button></li>
+                      <li><button class="nb-file-btn" data-file="28_10_25">28_10_25.md</button></li>
+                    </ul>
+                  </div>
+                </div>
+
+                <!-- Inline viewer -->
+                <div class="nb-viewer">
+                  <div class="nb-viewer-head">
+                    <span class="showroom-kicker" style="font-size:0.85rem;">FILE VIEWER</span>
+                    <span class="nb-viewer-filename" id="viewer-filename">— select a file —</span>
+                  </div>
+                  <div class="nb-viewer-body" id="viewer-body">
+                    <span class="placeholder-text">Click any file on the left to read its contents.</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- RIGHT: monthly summary -->
+              <div class="nb-right">
+                <div class="nb-summary-head">
+                  <span class="showroom-kicker">AGENT OUTPUT — MONTHLY SUMMARY</span>
+                  <div class="terminal-lights" aria-hidden="true">
+                    <span></span><span></span><span></span>
+                  </div>
+                </div>
+                <div class="nb-summary-body" id="summary-body"></div>
+              </div>
+            </div>
+
+            <!-- How It Works -->
+            <div class="how-it-works">
+              <div class="hiw-head">
+                <span class="showroom-kicker">HOW IT WORKS</span>
+              </div>
+              <div class="hiw-steps">
+                <div class="hiw-step">
+                  <div class="hiw-step-num">1</div>
+                  <p class="hiw-step-title">Write Daily Notes</p>
+                  <p class="hiw-step-body">
+                    Researcher writes quick <code>.md</code> entries each day —
+                    a to-do list and a notes section. No special format enforced.
+                    Files live in <code>chronicle/&lt;month&gt;/&lt;week&gt;/</code>.
+                  </p>
+                </div>
+                <div class="hiw-step">
+                  <div class="hiw-step-num">2</div>
+                  <p class="hiw-step-title">Agent Discovers Files</p>
+                  <p class="hiw-step-body">
+                    The agent scans the chronicle directory, collects all
+                    <code>.md</code> files for the target month, and
+                    concatenates them into a single structured prompt.
+                    Skips summaries that already exist.
+                    <code class="hiw-step-code">python summarise.py month oct_2025</code>
+                  </p>
+                </div>
+                <div class="hiw-step">
+                  <div class="hiw-step-num">3</div>
+                  <p class="hiw-step-title">Local LLM Summarises</p>
+                  <p class="hiw-step-body">
+                    The combined entries are sent to <strong>Ollama</strong>
+                    running <strong>Gemma 3 12B</strong> locally via a
+                    structured prompt asking for accomplishments, findings,
+                    problems, and outstanding threads.
+                    <code class="hiw-step-code">POST localhost:11434/api/generate</code>
+                  </p>
+                </div>
+                <div class="hiw-step">
+                  <div class="hiw-step-num">4</div>
+                  <p class="hiw-step-title">Summary Written to Disk</p>
+                  <p class="hiw-step-body">
+                    The LLM's response is saved to
+                    <code>summaries/monthly/&lt;month&gt;.md</code>.
+                    The agent never overwrites existing summaries —
+                    you must delete manually to regenerate.
+                    <code class="hiw-step-code">summaries/monthly/oct_2025.md ✓</code>
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <aside class="resource-strip">
+              <ul>
+                <li>Agent script, prompts, and directory layout in the repo</li>
+                <li>Runs entirely offline — Ollama + Gemma 3 12B required</li>
+                <li>Supports <code>week</code>, <code>month</code>, and <code>all</code> commands</li>
+              </ul>
+            </aside>
+          </div>
+        </section>
+
+        <section class="upsell-section">
+          <div class="container">
+            <div class="section-head">
+              <div>
+                <p class="section-kicker">YOU MAY ALSO LIKE</p>
+                <h2 class="upsell-title">More Unreasonable Bargains</h2>
+              </div>
+            </div>
+            <div class="upsell-grid">
+              <a class="upsell-card" href="../bardgpt/index.html">
+                <div class="card-topline">
+                  <span class="sku">SKU: BB-0001</span>
+                  <span class="category-badge category-fun">FUN</span>
+                </div>
+                <h3 class="product-name">BardGPT</h3>
+                <p class="pitch">A GPT trained on Shakespeare with infomercial-grade enthusiasm!</p>
+                <span class="card-button">View Product →</span>
+              </a>
+              <a class="upsell-card" href="../tinygpt/index.html">
+                <div class="card-topline">
+                  <span class="sku">SKU: BB-0002</span>
+                  <span class="category-badge category-good">GOOD</span>
+                </div>
+                <h3 class="product-name">TinyGPT</h3>
+                <p class="pitch">The little model that could, and absolutely did!</p>
+                <span class="card-button">View Product →</span>
+              </a>
+              <a class="upsell-card" href="../blender/index.html">
+                <div class="card-topline">
+                  <span class="sku">SKU: BB-0003</span>
+                  <span class="category-badge category-good">GOOD</span>
+                </div>
+                <h3 class="product-name">Blender Agent</h3>
+                <p class="pitch">AI takes the controls in a 3D modelling suite!</p>
+                <span class="card-button">View Product →</span>
+              </a>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer class="site-footer">
+        <div class="container">
+          <div class="legal-panel">
+            <p class="legal-copy">
+              <strong>Disclaimer:</strong> BrainBlast™ is not responsible for summaries
+              that make your month look more productive than it actually was.
+              The wizard scientist's findings regarding void-ganglion volleys are awaiting peer review!!!
+            </p>
+          </div>
+        </div>
+      </footer>
+    </div>
+
+    <script>
+      // ── File contents ──────────────────────────────────────────────────────
+      const FILES = {
+        "01_10_25": `## To-do
+1. Set up rune-field electrode array in the Thunderwing Salamander tank
+   - Need to recalibrate after the weekend's mana flux event
+2. Run baseline aetheric spike sorting on yesterday's recordings
+3. Read Morwen & Thistledown (1887) on photosensitive ganglia in winged reptiles
+
+## Notes
+- First stable recording session with specimen TS-01 (Thunderwing Salamander, juvenile)
+- Observed spontaneous discharge bursts coinciding with wing-membrane flickers
+  - Burst rate: ~12 Hz, duration ~300 ms
+  - Unclear if these are motor commands or sensory reafference
+- Ambient enchantment in lab affecting baseline: need to add a null-rune shield`,
+
+        "03_10_25": `## To-do
+1. Re-run spike sorting with corrected rune-shield in place
+2. Identify putative motor vs. sensory units in TS-01 recordings
+3. Dissect mana-circuit layout for the Frostback Hare (specimen FH-02) — ears only today
+
+## Notes
+- Rune-shield successfully suppressed ambient noise floor by ~40 dB (aetheric units)
+- Sorted 18 units from TS-01 dorsal spinal ganglion
+  - Cluster quality poor for 4 units — flagged for manual review
+  - 3 units show clear correlation with wing-flicker events (lag ~15 ms)
+- FH-02 arrived from the northern enclosure. Ears show unusual iridescence —
+  possible mana-storage tissue? Need to check literature.
+- **Question**: are the correlated units in TS-01 pre- or post-synaptic to the wing motor plate?`,
+
+        "06_10_25": `## To-do
+1. Histology on TS-01 dorsal ganglion sections — confirm electrode placement
+2. Begin passive recording on FH-02, ears + posterior cortex
+3. Weekly equipment check on the astral imager
+
+## Notes
+- Histology confirms electrodes were ~200 µm lateral of target ganglion in TS-01
+  - Explains the poor cluster quality — repositioning needed for TS-02
+- FH-02 passive recording: found sustained low-frequency oscillation (~4 Hz) in ear tissue
+  - Oscillation amplitude modulated by ambient temperature: colder → larger amplitude
+  - This may be the mechanism behind the "frost aura" the hare projects
+- Astral imager calibration drifted — submitted maintenance request to Enchantment Services`,
+
+        "08_10_25": `## To-do
+1. Analyse FH-02 temperature-modulation data more carefully
+   - Does the 4 Hz oscillation phase-lock to any external signal?
+2. Introduce Voidfish (specimen VF-03) to the isolation tank
+3. Read up on impedance matching for semi-aquatic subjects before the VF-03 session
+
+## Notes
+- FH-02 4 Hz oscillation: cross-correlation with ambient temperature shows
+  near-perfect anti-correlation (r = -0.91)
+  - Oscillation appears to *drive* local cooling, not respond to it
+  - This is efferent — the nervous system is controlling the thermal output
+- VF-03 in isolation tank. Immediately cloaked itself. Will attempt recording tomorrow
+  with modified hydro-rune probes.
+- Need to order more hydro-rune probe tips — current stock is almost depleted`,
+
+        "10_10_25": `## To-do
+1. First active recording session with VF-03
+2. Check if cloaking behaviour is correlated with neural activity or entirely peripheral
+3. Continue TS-02 electrode placement — use updated coordinates from histology
+
+## Notes
+- VF-03 recording: achieved stable contact with hydro-rune probes after 45 min
+  - Found a dense cluster of "void-ganglion" cells along the lateral line
+  - These cells are silent at rest but fire in synchronised volleys during cloaking
+  - Volley frequency: ~80 Hz, highly stereotyped
+- TS-02 placement corrected. Immediately much cleaner recordings.
+  - 26 well-isolated units in dorsal ganglion
+- **Interesting**: VF-03 void-ganglion volleys look very similar to retinal ganglion
+  cell responses in mundane fish — convergent evolution of synchrony for
+  "invisibility" vs. visual processing?`,
+
+        "13_10_25": `## To-do
+1. Run TS-02 wing-flicker stimulus protocol — compare to TS-01 data
+2. Attempt to block VF-03 void-ganglion volleys with null-rune injection
+   - Dose: 0.5 ml at 10 mM — start low
+3. Write up week 1–2 methods section
+
+## Notes
+- TS-02 stimulus protocol: 12/18 units show clear tuning to wing-flicker direction
+  - Left vs. right flicker: distinct subpopulations (8 L-preferring, 4 R-preferring)
+  - Much cleaner than TS-01 data — confirms electrode placement was the issue before
+- VF-03 null-rune injection: volleys suppressed within ~2 min
+  - Cloaking behaviour completely abolished during suppression period
+  - Confirms void-ganglion volleys are *necessary* for cloaking, not just correlated
+  - VF-03 visibly distressed during suppression — kept this brief
+- Methods section: 60% written`,
+
+        "15_10_25": `## To-do
+1. Begin characterisation of Gloomhound (specimen GH-04) — focus on olfactory system
+2. Analyse TS-02 directional tuning in more depth
+   - Does tuning change between rest and flight-intent states?
+3. Order new null-rune reagents — running low after VF-03 experiment
+
+## Notes
+- GH-04 arrived. Much larger than expected — had to move to the large recording chamber
+- Placed 4-shank probe array targeting olfactory bulb equivalent ("shadow-lobe")
+  - Initial recordings: extremely high baseline firing rate (~80 spk/s) even with no
+    olfactory stimulation
+  - Units seem to encode *absence* of scent more than presence — inverted tuning?
+- TS-02 flight-intent analysis: directional tuning sharpens dramatically (~3x)
+  when animal enters pre-flight posture
+  - Motor cortex analogue appears to gate sensory precision — notable
+- Null-rune reagent order submitted to the Apothecary Stores`,
+
+        "18_10_25": `## To-do
+1. Run olfactory stimulus panel on GH-04
+   - Stimuli: 8 common scents + 3 magical essences (phoenixash, voidwater, starbloom)
+2. Attempt astral imaging on FH-02 ear tissue (imager back from maintenance)
+3. Finish methods section
+
+## Notes
+- GH-04 olfactory panel:
+  - Shadow-lobe units *decrease* firing to mundane scents (confirms inverted tuning)
+  - Response to voidwater: massive suppression to near-silence (~2 spk/s from 80 spk/s)
+  - Response to phoenixash: paradoxical *increase* in firing — the only stimulus that did this
+  - Starbloom: no effect
+  - Hypothesis: shadow-lobe encodes a "darkness index" — phoenixash disrupts this because
+    it is a luminant substance
+- FH-02 astral imaging: confirmed mana-storage granules in ear tissue
+  - Granule density highest at ear tips, decreases basally
+  - Granules appear to discharge in synchrony with the 4 Hz neural oscillation
+- Methods section: done`,
+
+        "22_10_25": `## To-do
+1. Replicate VF-03 cloaking experiment — want n=3 before writing it up
+2. Check if GH-04 shadow-lobe "darkness index" hypothesis holds with light-level manipulation
+3. Start thinking about Emberwyrm (specimen EW-05) — arrives next week
+
+## Notes
+- VF-03 replication (n=2 now): void-ganglion volley suppression → cloaking abolition
+  confirmed again. Same latency, same distress behaviour.
+  - Will do n=3 with a lower dose next time to reduce distress
+- GH-04 light-level experiment:
+  - Darkened room: baseline firing rate increased to ~110 spk/s
+  - Bright light: baseline dropped to ~45 spk/s
+  - Linear relationship across tested range (r² = 0.97)
+  - Darkness index hypothesis strongly supported
+- EW-05 (juvenile Emberwyrm): noted it runs warm — lab will need
+  heat-dampening wards before recording session. Submitting ward request.`,
+
+        "28_10_25": `## To-do
+1. EW-05 first recording session — focus on thermal regulation circuitry
+2. Write up FH-02 and GH-04 results
+3. Outline talk for the Arcane Neuroscience Colloquium (Nov 14)
+
+## Notes
+- EW-05 heat-dampening wards installed. Recorded from brainstem thermal nucleus
+  - Found two populations: "heat-ON" cells (fire when temp rises) and "heat-OFF" cells
+  - Heat-ON: tonic firing, rate scales with body temperature
+  - Heat-OFF: burst-firing only at low temperatures — possibly hypothermia-avoidance circuit
+  - No spontaneous flame events during session (good)
+- FH-02 + GH-04 writeup: drafted figures 1–3
+- Colloquium outline done. Tentative title:
+  "Efferent mana-circuits and magical behaviour: three case studies"
+- **Outstanding**: still need n=3 for VF-03 cloaking experiment. Schedule for week 1 Nov.`
+      };
+
+      // ── Monthly summary (Gemma 3 output) ──────────────────────────────────
+      const SUMMARY_MD = `# Monthly Summary — oct_2025
+
+## Monthly Summary - October 2025 - Neuro-Magical Research Lab
+
+This report summarizes research activities and findings from October 2025. Focus has been on characterizing neural circuits in multiple magical creatures, primarily Thunderwing Salamanders (TS), Frostback Hares (FH), Voidfish (VF), Gloomhounds (GH), and a newly introduced juvenile Emberwyrm (EW).
+
+**I. Major Accomplishments & Milestones**
+
+- **Established baseline recordings:** Successfully established stable baseline recordings in multiple species, including TS-01, FH-02, VF-03, GH-04, and EW-05.
+- **Rune-Shield implementation:** Successfully implemented and calibrated a rune-shield to reduce ambient aetheric noise, significantly improving recording quality.
+- **Key Circuit Identification:** Identified key neural circuits involved in wing-flicker control in TS, thermal regulation in FH ("frost aura" mechanism), cloaking in VF, olfactory processing ("darkness index") in GH, and thermal regulation in EW.
+- **Methods Section Completed:** Finalized the methods section for a forthcoming manuscript.
+- **Colloquium Outline Completed:** Prepared an outline for a presentation at the Arcane Neuroscience Colloquium.
+
+**II. Key Findings & Results**
+
+- **Thunderwing Salamander (TS):** Identified 18 dorsal spinal ganglion units with 3 exhibiting correlation to wing-flicker events. Directional tuning to wing-flicker was found to sharpen significantly (~3x) when the animal adopted a pre-flight posture, suggesting motor cortex gating of sensory precision.
+- **Frostback Hare (FH):** Discovered a 4 Hz low-frequency oscillation in ear tissue, with strong anti-correlation to ambient temperature (r = −0.91), appearing to *drive* local cooling. Astral imaging confirmed mana-storage granules in ear tissue, synchronized with this oscillation.
+- **Voidfish (VF):** Identified a dense cluster of "void-ganglion" cells that fire synchronized ~80 Hz volleys during cloaking. Null-rune injection (n=2) suppressed volleys and completely abolished cloaking, confirming their necessity.
+- **Gloomhound (GH):** Observed inverted tuning in the shadow-lobe olfactory system — reduced firing to mundane scents but paradoxical increase to phoenixash. Light-level manipulation confirmed a linear "darkness index" encoding strategy (r² = 0.97).
+- **Emberwyrm (EW):** Identified distinct "heat-ON" (tonic, temperature-scaling) and "heat-OFF" (burst, low-temperature) populations within the brainstem thermal nucleus.
+
+**III. Recurring Problems & Solutions**
+
+- **Ambient Aetheric Noise:** High ambient noise resolved by implementing a null-rune shield (−40 dB).
+- **Poor Cluster Quality in TS-01:** Attributed to electrode placement error (~200 µm lateral); corrected for TS-02 using histology coordinates.
+- **Astral Imager Calibration Drift:** Submitted maintenance request; imager returned and operational.
+- **Distress During Reagent Injection:** VF-03 showed distress during null-rune injection; plan to use a lower dose for the n=3 replication.
+- **Emberwyrm Heat Output:** Required heat-dampening wards before recording session; installed successfully.
+
+**IV. Ongoing Threads & Outstanding To-Dos**
+
+- VF cloaking replication with n=3 (lower null-rune dose) — scheduled for week 1 Nov.
+- Determine whether correlated TS units are pre- or post-synaptic to the wing motor plate.
+- Continue EW thermal circuit characterisation.
+- Complete manuscript with figures 1–3 drafted; results sections pending.
+- Replenish hydro-rune probe tips and null-rune reagent stock.`;
+
+      // ── Render summary on load ─────────────────────────────────────────────
+      document.addEventListener("DOMContentLoaded", () => {
+        const summaryEl = document.getElementById("summary-body");
+        if (summaryEl && typeof marked !== "undefined") {
+          summaryEl.innerHTML = marked.parse(SUMMARY_MD);
+        }
+
+        // ── File viewer logic ──────────────────────────────────────────────
+        const viewerBody = document.getElementById("viewer-body");
+        const viewerFilename = document.getElementById("viewer-filename");
+        const fileBtns = document.querySelectorAll(".nb-file-btn");
+
+        fileBtns.forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const key = btn.dataset.file;
+            const content = FILES[key];
+
+            // Update active state
+            fileBtns.forEach((b) => b.classList.remove("is-active"));
+            btn.classList.add("is-active");
+
+            // Update viewer
+            viewerFilename.textContent = key + ".md";
+            viewerBody.textContent = content || "(empty)";
+          });
+        });
+      });
+    </script>
+  </body>
+</html>
