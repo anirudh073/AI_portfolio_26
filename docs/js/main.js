@@ -216,45 +216,73 @@ function scrollToNavigationTarget(hash) {
 }
 
 function initCatalogueFilters() {
-  const filterButtons = Array.from(document.querySelectorAll("[data-filter]"));
-  const cards = Array.from(document.querySelectorAll("[data-category]"));
+  const typeButtons = Array.from(document.querySelectorAll("[data-type-filter]"));
+  const moodButtons = Array.from(document.querySelectorAll("[data-mood-filter]"));
+  const cards = Array.from(document.querySelectorAll(".product-grid .product-card[data-type][data-mood]"));
   const status = document.querySelector("[data-filter-status]");
 
-  if (!filterButtons.length || !cards.length) {
+  if (!typeButtons.length || !cards.length) {
     return;
   }
 
-  const updateFilter = (filter) => {
+  let activeType = typeButtons.find((button) => button.classList.contains("is-active"))?.dataset.typeFilter || "all";
+  let activeMood = moodButtons.find((button) => button.classList.contains("is-active"))?.dataset.moodFilter || "all";
+
+  const syncButtons = (buttons, activeValue, key) => {
+    buttons.forEach((button) => {
+      const active = button.dataset[key] === activeValue;
+      button.classList.toggle("is-active", active);
+      button.setAttribute("aria-pressed", String(active));
+    });
+  };
+
+  const buttonLabel = (buttons, activeValue, key, fallback) => {
+    if (activeValue === "all") {
+      return fallback;
+    }
+
+    return buttons.find((button) => button.dataset[key] === activeValue)?.textContent?.trim() || fallback;
+  };
+
+  const updateFilter = () => {
     let visibleCount = 0;
 
     cards.forEach((card) => {
-      const matches = filter === "all" || card.dataset.category === filter;
-      card.classList.toggle("is-hidden", !matches);
+      const matchesType = activeType === "all" || card.dataset.type === activeType;
+      const matchesMood = activeMood === "all" || card.dataset.mood === activeMood;
+      const matches = matchesType && matchesMood;
 
+      card.classList.toggle("is-hidden", !matches);
       if (matches) {
         visibleCount += 1;
       }
     });
 
-    filterButtons.forEach((button) => {
-      const active = button.dataset.filter === filter;
-      button.classList.toggle("is-active", active);
-      button.setAttribute("aria-pressed", String(active));
-    });
+    syncButtons(typeButtons, activeType, "typeFilter");
+    syncButtons(moodButtons, activeMood, "moodFilter");
 
     if (status) {
-      const label = filter === "all" ? "ALL DEPARTMENTS" : `${filter.toUpperCase()} DEPARTMENT`;
-      status.textContent = `${visibleCount} DEAL${visibleCount === 1 ? "" : "S"} IN ${label}!`;
+      const typeLabel = buttonLabel(typeButtons, activeType, "typeFilter", "ALL TYPES").toUpperCase();
+      const moodLabel = buttonLabel(moodButtons, activeMood, "moodFilter", "ALL MOODS").toUpperCase();
+      status.textContent = `${visibleCount} DEAL${visibleCount === 1 ? "" : "S"} IN ${typeLabel} • ${moodLabel}!`;
     }
   };
 
-  filterButtons.forEach((button) => {
+  typeButtons.forEach((button) => {
     button.addEventListener("click", () => {
-      updateFilter(button.dataset.filter || "all");
+      activeType = button.dataset.typeFilter || "all";
+      updateFilter();
     });
   });
 
-  updateFilter("all");
+  moodButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      activeMood = button.dataset.moodFilter || "all";
+      updateFilter();
+    });
+  });
+
+  updateFilter();
 }
 
 function initChatDemos() {
