@@ -401,6 +401,14 @@ function initCatalogueFilters() {
   updateFilter();
 }
 
+function resolveInferenceEndpoint(netlifyPath) {
+  const base = (window.BRAINBLAST_INFERENCE_URL || "").replace(/\/$/, "");
+  if (!base) return netlifyPath; // use Netlify function as-is
+  // extract model name: "/.netlify/functions/generate-bardgpt" → "bardgpt"
+  const model = (netlifyPath || "").split("-").pop();
+  return `${base}/generate/${model}`;
+}
+
 function initChatDemos() {
   const chatDemos = Array.from(document.querySelectorAll("[data-chat-demo]"));
 
@@ -412,7 +420,7 @@ function initChatDemos() {
     const temperatureValue = demo.querySelector("[data-chat-temperature-value]");
     const maxTokensInput = demo.querySelector("[data-chat-max-tokens]");
     const sendButton = demo.querySelector("[data-chat-submit]");
-    const endpoint = demo.dataset.endpoint;
+    const endpoint = resolveInferenceEndpoint(demo.dataset.endpoint);
     const welcome = demo.dataset.welcome;
     const productName = demo.dataset.productName || "BrainBlast Bot";
 
