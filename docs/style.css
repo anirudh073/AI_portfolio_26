@@ -172,6 +172,47 @@ button,
   gap: 0.5rem;
 }
 
+.jingle-toggle {
+  display: grid;
+  gap: 0.12rem;
+  justify-items: center;
+  min-width: min(100%, 250px);
+  padding: 0.65rem 0.95rem;
+  border: 3px solid var(--line);
+  border-radius: 20px;
+  background:
+    linear-gradient(180deg, #ffffff 0%, #ffe786 100%);
+  box-shadow: var(--shadow-small);
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+}
+
+.jingle-toggle:hover,
+.jingle-toggle:focus-visible {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 #111111;
+}
+
+.jingle-toggle.is-playing {
+  background:
+    linear-gradient(180deg, rgba(232, 0, 45, 0.96) 0%, rgba(255, 138, 0, 0.96) 100%);
+  color: #ffffff;
+}
+
+.jingle-toggle-label {
+  font-family: "Bebas Neue", sans-serif;
+  font-size: 1.45rem;
+  line-height: 0.95;
+  letter-spacing: 0.06em;
+}
+
+.jingle-toggle-meta {
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+}
+
 .hotline {
   display: inline-flex;
   align-items: center;
@@ -1348,6 +1389,10 @@ button,
   }
 
   .masthead-side {
+    justify-items: start;
+  }
+
+  .jingle-toggle {
     justify-items: start;
   }
 

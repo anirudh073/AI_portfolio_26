@@ -1,8 +1,219 @@
+let jingleAudio = null;
+let jingleToggle = null;
+let jingleBlocked = false;
+let pageNavigationInFlight = false;
+
 document.addEventListener("DOMContentLoaded", () => {
+  initPageNavigation();
+  initializePage();
+});
+
+function initializePage() {
+  initJingleToggle();
   initCatalogueFilters();
   initChatDemos();
   initShowroomGalleries();
-});
+}
+
+function initJingleToggle() {
+  const mastheadSide = document.querySelector(".masthead-side");
+
+  if (!mastheadSide) {
+    return;
+  }
+
+  if (!jingleAudio) {
+    jingleAudio = new Audio(resolveJingleSource());
+    jingleAudio.loop = true;
+    jingleAudio.preload = "auto";
+    jingleAudio.addEventListener("play", () => {
+      jingleBlocked = false;
+      syncJingleToggle();
+    });
+    jingleAudio.addEventListener("pause", syncJingleToggle);
+  }
+
+  if (jingleToggle?.isConnected) {
+    jingleToggle.remove();
+  }
+
+  jingleToggle = document.createElement("button");
+  jingleToggle.type = "button";
+  jingleToggle.className = "jingle-toggle";
+  jingleToggle.setAttribute("aria-pressed", "false");
+  jingleToggle.addEventListener("click", async () => {
+    if (!jingleAudio) {
+      return;
+    }
+
+    if (!jingleAudio.paused) {
+      jingleAudio.pause();
+      jingleBlocked = false;
+      syncJingleToggle();
+      return;
+    }
+
+    try {
+      await jingleAudio.play();
+    } catch (error) {
+      jingleBlocked = true;
+      syncJingleToggle();
+    }
+  });
+
+  syncJingleToggle();
+  mastheadSide.insertBefore(jingleToggle, mastheadSide.querySelector(".support-copy") || null);
+}
+
+function resolveJingleSource() {
+  const isProjectPage = window.location.pathname.includes("/projects/");
+  return isProjectPage ? "../../assets/music/brainblast-deal.mp3" : "assets/music/brainblast-deal.mp3";
+}
+
+function syncJingleToggle() {
+  if (!jingleToggle) {
+    return;
+  }
+
+  const isPlaying = Boolean(jingleAudio) && !jingleAudio.paused;
+
+  jingleToggle.classList.toggle("is-playing", isPlaying);
+  jingleToggle.setAttribute("aria-pressed", String(isPlaying));
+
+  if (jingleBlocked) {
+    jingleToggle.innerHTML = `
+      <span class="jingle-toggle-label">Jingle Blocked</span>
+      <span class="jingle-toggle-meta">Browser said no. Click again!!!</span>
+    `;
+    return;
+  }
+
+  jingleToggle.innerHTML = `
+    <span class="jingle-toggle-label">${isPlaying ? "Pause Jingle" : "Play Jingle"}</span>
+    <span class="jingle-toggle-meta">${isPlaying ? "BrainBlast Beats On Air" : "Tap For Full Infomercial Energy"}</span>
+  `;
+}
+
+function initPageNavigation() {
+  document.addEventListener("click", (event) => {
+    const link = event.target.closest("a[href]");
+
+    if (!link || !shouldHandleInternalNavigation(link, event)) {
+      return;
+    }
+
+    const nextUrl = new URL(link.href, window.location.href);
+
+    event.preventDefault();
+    navigateTo(nextUrl.href);
+  });
+
+  window.addEventListener("popstate", () => {
+    navigateTo(window.location.href, { isHistoryNavigation: true });
+  });
+}
+
+function shouldHandleInternalNavigation(link, event) {
+  if (event.defaultPrevented || event.button !== 0) {
+    return false;
+  }
+
+  if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+    return false;
+  }
+
+  if (link.target && link.target !== "_self") {
+    return false;
+  }
+
+  if (link.hasAttribute("download")) {
+    return false;
+  }
+
+  const href = link.getAttribute("href");
+
+  if (!href || href.startsWith("mailto:") || href.startsWith("tel:")) {
+    return false;
+  }
+
+  const nextUrl = new URL(link.href, window.location.href);
+  const sameDocumentHashJump =
+    nextUrl.origin === window.location.origin &&
+    nextUrl.pathname === window.location.pathname &&
+    nextUrl.search === window.location.search &&
+    nextUrl.hash;
+
+  if (sameDocumentHashJump) {
+    return false;
+  }
+
+  if (nextUrl.origin !== window.location.origin) {
+    return false;
+  }
+
+  return nextUrl.pathname.endsWith(".html") || nextUrl.pathname === "/" || nextUrl.pathname.endsWith("/");
+}
+
+async function navigateTo(url, { isHistoryNavigation = false } = {}) {
+  if (pageNavigationInFlight) {
+    return;
+  }
+
+  const nextUrl = new URL(url, window.location.href);
+
+  if (
+    nextUrl.pathname === window.location.pathname &&
+    nextUrl.search === window.location.search &&
+    nextUrl.hash === window.location.hash
+  ) {
+    return;
+  }
+
+  pageNavigationInFlight = true;
+
+  try {
+    const response = await fetch(nextUrl.href, { headers: { "X-Requested-With": "brainblast-nav" } });
+
+    if (!response.ok) {
+      throw new Error(`Navigation failed with status ${response.status}`);
+    }
+
+    const html = await response.text();
+    const parsed = new DOMParser().parseFromString(html, "text/html");
+    const incomingShell = parsed.querySelector(".site-shell");
+    const currentShell = document.querySelector(".site-shell");
+
+    if (!incomingShell || !currentShell) {
+      throw new Error("Missing site shell during navigation swap");
+    }
+
+    if (!isHistoryNavigation) {
+      history.pushState({}, "", nextUrl.href);
+    }
+
+    document.title = parsed.title;
+    currentShell.innerHTML = incomingShell.innerHTML;
+    initializePage();
+    scrollToNavigationTarget(nextUrl.hash);
+  } catch (error) {
+    window.location.href = nextUrl.href;
+  } finally {
+    pageNavigationInFlight = false;
+  }
+}
+
+function scrollToNavigationTarget(hash) {
+  if (hash) {
+    const target = document.querySelector(hash);
+
+    if (target) {
+      target.scrollIntoView({ behavior: "auto", block: "start" });
+      return;
+    }
+  }
+
+  window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+}
 
 function initCatalogueFilters() {
   const filterButtons = Array.from(document.querySelectorAll("[data-filter]"));
