@@ -1,0 +1,1 @@
+/home/labuser/AI_portfolio_26/build_an_AI/tinygpt/data/shakespeare.txt
