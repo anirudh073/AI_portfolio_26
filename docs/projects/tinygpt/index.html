@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TinyGPT | BrainBlast™</title>
+    <meta
+      name="description"
+      content="TinyGPT is BrainBlast™ mini-model mayhem: compact, educational, and sold with giant confidence."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../style.css" />
+    <script defer src="../../js/main.js"></script>
+  </head>
+  <body>
+    <div class="site-shell">
+      <div class="ticker" aria-label="BrainBlast hype ticker">
+        <div class="ticker-track">
+          <span>✦ SMALL MODEL BIG ENERGY ✦ SHAKESPEARE SHRUNK TO COUNTERTOP SIZE ✦ LEARN FAST ✦</span>
+          <span>✦ LIMITED ONLY BY YOUR AMBITION ✦ OPERATORS LOVE TINY TOKENS ✦ RESULTS MAY VARY ✦</span>
+          <span>✦ SMALL MODEL BIG ENERGY ✦ SHAKESPEARE SHRUNK TO COUNTERTOP SIZE ✦ LEARN FAST ✦</span>
+          <span>✦ LIMITED ONLY BY YOUR AMBITION ✦ OPERATORS LOVE TINY TOKENS ✦ RESULTS MAY VARY ✦</span>
+        </div>
+      </div>
+
+      <header class="masthead">
+        <div class="container masthead-row">
+          <div class="brand-block">
+            <a class="logo-mark" href="../../index.html" aria-label="BrainBlast home">
+              Brain<span class="accent">Blast™</span>
+            </a>
+            <p class="tagline">THE FUTURE IS HERE AND IT'S ON SALE!!!</p>
+          </div>
+          <div class="masthead-side">
+            <div class="hotline">CALL 1-800-BRAINIO</div>
+            <p class="support-copy">Tiny enough for demos! Loud enough for television! Educational enough for respectability!</p>
+          </div>
+        </div>
+      </header>
+
+      <main>
+        <section class="detail-hero">
+          <div class="container">
+            <a class="back-link" href="../../index.html">← Back To Catalogue</a>
+            <div class="detail-panel">
+              <div>
+                <div class="detail-meta">
+                  <span class="sku">SKU: BB-0002</span>
+                  <span class="category-badge category-good">GOOD</span>
+                  <span class="stock-pill stock-in">In Stock</span>
+                </div>
+                <h1 class="detail-title">TinyGPT</h1>
+                <p class="detail-lead">
+                  A miniature GPT training demo with giant educational value! It
+                  proves you do not need a warehouse full of GPUs to learn how
+                  language models come together, although a dramatic voice-over helps!!!
+                </p>
+                <div class="detail-price">
+                  <span class="price-old">$149.99</span>
+                  <span class="price-free">Yours For Free!</span>
+                </div>
+                <div class="action-links">
+                  <a
+                    class="button-link primary"
+                    href="https://github.com/anirudh073/AI_portfolio_26/tree/main/build_an_AI/tinygpt"
+                    target="_blank"
+                    rel="noreferrer"
+                    >View Source Code</a
+                  >
+                  <a
+                    class="button-link secondary"
+                    href="https://github.com/anirudh073/AI_portfolio_26/blob/main/build_an_AI/tinygpt/data/shakespeare.txt"
+                    target="_blank"
+                    rel="noreferrer"
+                    >Peek At Dataset</a
+                  >
+                </div>
+              </div>
+
+              <aside class="panel-box">
+                <h2 class="panel-title">Product Highlights</h2>
+                <ul class="highlights-list">
+                  <li>Compact enough to understand without a research grant!</li>
+                  <li>Built to show the full training loop from scratch!</li>
+                  <li>Turns Shakespeare into an educational appliance!</li>
+                  <li>Proof that small models can still create large excitement!</li>
+                </ul>
+              </aside>
+            </div>
+          </div>
+        </section>
+
+        <section class="media-section">
+          <div class="container">
+            <div
+              class="chat-demo-layout"
+              data-chat-demo
+              data-endpoint="/.netlify/functions/generate-tinygpt"
+              data-product-name="TinyGPT"
+              data-welcome="Hello! I am TinyGPT. Small but mighty. What shall I generate today!!!"
+            >
+              <div class="chat-terminal">
+                <div class="chat-terminal-head">
+                  <span class="showroom-kicker">LIVE DEMO TERMINAL</span>
+                  <div class="terminal-lights" aria-hidden="true">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                  </div>
+                </div>
+                <div class="terminal-screen">
+                  <div class="chat-log" data-chat-log role="log" aria-live="polite"></div>
+                  <form class="chat-form" data-chat-form>
+                    <label>
+                      <span>TYPE A TINY BUT MIGHTY PROMPT</span>
+                      <input
+                        class="chat-input"
+                        type="text"
+                        name="prompt"
+                        data-chat-prompt
+                        placeholder="Ask for verse, dialogue, or a pocket-sized monologue!!!"
+                      />
+                    </label>
+                    <button class="chat-submit" type="submit" data-chat-submit>GENERATE!!!</button>
+                  </form>
+                </div>
+              </div>
+
+              <aside class="chat-controls">
+                <h2 class="control-heading">Tune The Tiny!</h2>
+                <p class="mini-copy">Micro-model, macro-confidence. Dial responsibly or don’t!!!</p>
+
+                <label class="control-field">
+                  <div class="control-inline">
+                    <span>Heat Level™</span>
+                    <output class="control-readout" data-chat-temperature-value>0.8</output>
+                  </div>
+                  <input
+                    class="control-slider"
+                    type="range"
+                    min="0.1"
+                    max="2.0"
+                    step="0.1"
+                    value="0.8"
+                    name="temperature"
+                    data-chat-temperature
+                  />
+                </label>
+
+                <label class="control-field">
+                  <span>Word Flood</span>
+                  <input
+                    class="control-number"
+                    type="number"
+                    min="10"
+                    max="200"
+                    step="1"
+                    value="100"
+                    name="max_tokens"
+                    data-chat-max-tokens
+                  />
+                </label>
+
+                <p class="disclaimer-note">
+                  Output may contain Elizabethan nonsense. BrainBlast™ accepts no liability.
+                </p>
+              </aside>
+            </div>
+            <aside class="resource-strip">
+              <ul>
+                <li>Training and generation scripts</li>
+                <li>Dataset prep files and starter text</li>
+                <li>Clean jumping-off point for experimentation</li>
+              </ul>
+            </aside>
+          </div>
+        </section>
+
+        <section class="upsell-section">
+          <div class="container">
+            <div class="section-head">
+              <div>
+                <p class="section-kicker">YOU MAY ALSO LIKE</p>
+                <h2 class="upsell-title">Keep The Savings Coming</h2>
+              </div>
+            </div>
+            <div class="upsell-grid">
+              <a class="upsell-card" href="../bardgpt/index.html">
+                <div class="card-topline">
+                  <span class="sku">SKU: BB-0001</span>
+                  <span class="category-badge category-fun">FUN</span>
+                </div>
+                <h3 class="product-name">BardGPT</h3>
+                <p class="pitch">Now with 100% more theatrical flair!</p>
+                <span class="card-button">View Product →</span>
+              </a>
+              <a class="upsell-card" href="../dnaanimator/index.html">
+                <div class="card-topline">
+                  <span class="sku">SKU: BB-0004</span>
+                  <span class="category-badge category-good">GOOD</span>
+                </div>
+                <h3 class="product-name">DNA Animator</h3>
+                <p class="pitch">Science visuals that absolutely refuse to be boring!</p>
+                <span class="card-button">View Product →</span>
+              </a>
+              <a class="upsell-card" href="../blender/index.html">
+                <div class="card-topline">
+                  <span class="sku">SKU: BB-0003</span>
+                  <span class="category-badge category-fun">FUN</span>
+                </div>
+                <h3 class="product-name">Blender Brain</h3>
+                <p class="pitch">A 3D pipeline with the energy of a fireworks stand!</p>
+                <span class="card-button">View Product →</span>
+              </a>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer class="site-footer">
+        <div class="container">
+          <div class="legal-panel">
+            <p class="legal-copy">
+              <strong>Disclaimer:</strong> BrainBlast™ cannot promise your tiny
+              model will remain humble. Side effects may include confidence,
+              curiosity, and an abrupt interest in tokenization!!!
+            </p>
+          </div>
+        </div>
+      </footer>
+    </div>
+  </body>
+</html>

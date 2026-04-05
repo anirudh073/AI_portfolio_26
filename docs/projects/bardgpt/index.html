@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BardGPT | BrainBlast™</title>
+    <meta
+      name="description"
+      content="BardGPT is BrainBlast™ Shakespeare-in-a-box: a theatrical GPT demo with infomercial-grade enthusiasm and real training code."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../style.css" />
+    <script defer src="../../js/main.js"></script>
+  </head>
+  <body>
+    <div class="site-shell">
+      <div class="ticker" aria-label="BrainBlast hype ticker">
+        <div class="ticker-track">
+          <span>✦ FORSOOTH THIS DEMO IS IN STOCK ✦ TRAINED ON THE BARD HIMSELF ✦ ZERO MONTHLY PAYMENTS ✦</span>
+          <span>✦ CALL 1-800-BRAINIO ✦ ELIZABETHAN OUTPUT SOLD SEPARATELY ✦ RESULTS MAY VARY ✦</span>
+          <span>✦ FORSOOTH THIS DEMO IS IN STOCK ✦ TRAINED ON THE BARD HIMSELF ✦ ZERO MONTHLY PAYMENTS ✦</span>
+          <span>✦ CALL 1-800-BRAINIO ✦ ELIZABETHAN OUTPUT SOLD SEPARATELY ✦ RESULTS MAY VARY ✦</span>
+        </div>
+      </div>
+
+      <header class="masthead">
+        <div class="container masthead-row">
+          <div class="brand-block">
+            <a class="logo-mark" href="../../index.html" aria-label="BrainBlast home">
+              Brain<span class="accent">Blast™</span>
+            </a>
+            <p class="tagline">THE FUTURE IS HERE AND IT'S ON SALE!!!</p>
+          </div>
+          <div class="masthead-side">
+            <div class="hotline">CALL 1-800-BRAINIO</div>
+            <p class="support-copy">If it starts speaking in iambic pentameter, that means the product is working!</p>
+          </div>
+        </div>
+      </header>
+
+      <main>
+        <section class="detail-hero">
+          <div class="container">
+            <a class="back-link" href="../../index.html">← Back To Catalogue</a>
+            <div class="detail-panel">
+              <div>
+                <div class="detail-meta">
+                  <span class="sku">SKU: BB-0001</span>
+                  <span class="category-badge category-fun">FUN</span>
+                  <span class="stock-pill stock-in">In Stock</span>
+                </div>
+                <h1 class="detail-title">BardGPT</h1>
+                <p class="detail-lead">
+                  A GPT trained on Shakespeare and sold with the confidence of a
+                  midnight television host! Ask it for drama, sonnets, or a
+                  suspiciously poetic meltdown and it delivers with flourish!!!
+                </p>
+                <div class="detail-price">
+                  <span class="price-old">$199.99</span>
+                  <span class="price-free">Yours For Free!</span>
+                </div>
+                <div class="action-links">
+                  <a
+                    class="button-link primary"
+                    href="https://github.com/anirudh073/AI_portfolio_26/tree/main/build_an_AI/bardgpt"
+                    target="_blank"
+                    rel="noreferrer"
+                    >View Source Code</a
+                  >
+                  <a
+                    class="button-link secondary"
+                    href="https://github.com/anirudh073/AI_portfolio_26/blob/main/build_an_AI/bardgpt/train.py"
+                    target="_blank"
+                    rel="noreferrer"
+                    >Open Training Script</a
+                  >
+                </div>
+              </div>
+
+              <aside class="panel-box">
+                <h2 class="panel-title">Product Highlights</h2>
+                <ul class="highlights-list">
+                  <li>Powered by actual AI and entirely too much Shakespeare!</li>
+                  <li>Generates theatrical text faster than a court jester on espresso!</li>
+                  <li>Excellent for demos, experiments, and dramatic overreaction!</li>
+                  <li>Will not steal your job unless your job is being extremely poetic!</li>
+                </ul>
+              </aside>
+            </div>
+          </div>
+        </section>
+
+        <section class="media-section">
+          <div class="container">
+            <div
+              class="chat-demo-layout"
+              data-chat-demo
+              data-endpoint="/.netlify/functions/generate-bardgpt"
+              data-product-name="BardGPT"
+              data-welcome="Hark! I am BardGPT. Speak thy prompt and I shall respond in the manner of the Bard!!!"
+            >
+              <div class="chat-terminal">
+                <div class="chat-terminal-head">
+                  <span class="showroom-kicker">LIVE DEMO TERMINAL</span>
+                  <div class="terminal-lights" aria-hidden="true">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                  </div>
+                </div>
+                <div class="terminal-screen">
+                  <div class="chat-log" data-chat-log role="log" aria-live="polite"></div>
+                  <form class="chat-form" data-chat-form>
+                    <label>
+                      <span>ENTER THY PROMPT</span>
+                      <input
+                        class="chat-input"
+                        type="text"
+                        name="prompt"
+                        data-chat-prompt
+                        placeholder="Compose thy finest Shakespearean request!!!"
+                      />
+                    </label>
+                    <button class="chat-submit" type="submit" data-chat-submit>GENERATE!!!</button>
+                  </form>
+                </div>
+              </div>
+
+              <aside class="chat-controls">
+                <h2 class="control-heading">Tune The Bard!</h2>
+                <p class="mini-copy">Adjust the chaos knobs before the sonnets spill all over the carpet!!!</p>
+
+                <label class="control-field">
+                  <div class="control-inline">
+                    <span>Heat Level™</span>
+                    <output class="control-readout" data-chat-temperature-value>0.8</output>
+                  </div>
+                  <input
+                    class="control-slider"
+                    type="range"
+                    min="0.1"
+                    max="2.0"
+                    step="0.1"
+                    value="0.8"
+                    name="temperature"
+                    data-chat-temperature
+                  />
+                </label>
+
+                <label class="control-field">
+                  <span>Word Flood</span>
+                  <input
+                    class="control-number"
+                    type="number"
+                    min="10"
+                    max="200"
+                    step="1"
+                    value="100"
+                    name="max_tokens"
+                    data-chat-max-tokens
+                  />
+                </label>
+
+                <p class="disclaimer-note">
+                  Output may contain Elizabethan nonsense. BrainBlast™ accepts no liability.
+                </p>
+              </aside>
+            </div>
+            <aside class="resource-strip">
+              <ul>
+                <li>Training config, model definition, generation scripts</li>
+                <li>Dataset preparation for the theatrical text pipeline</li>
+                <li>Full source in the repo</li>
+              </ul>
+            </aside>
+          </div>
+        </section>
+
+        <section class="upsell-section">
+          <div class="container">
+            <div class="section-head">
+              <div>
+                <p class="section-kicker">YOU MAY ALSO LIKE</p>
+                <h2 class="upsell-title">More Unreasonable Bargains</h2>
+              </div>
+            </div>
+            <div class="upsell-grid">
+              <a class="upsell-card" href="../tinygpt/index.html">
+                <div class="card-topline">
+                  <span class="sku">SKU: BB-0002</span>
+                  <span class="category-badge category-good">GOOD</span>
+                </div>
+                <h3 class="product-name">TinyGPT</h3>
+                <p class="pitch">The little model that could, and absolutely did!</p>
+                <span class="card-button">View Product →</span>
+              </a>
+              <a class="upsell-card" href="../paperbanana/index.html">
+                <div class="card-topline">
+                  <span class="sku">SKU: BB-0005</span>
+                  <span class="category-badge category-fun">FUN</span>
+                </div>
+                <h3 class="product-name">PaperBanana</h3>
+                <p class="pitch">Media generation with a name nobody can explain!</p>
+                <span class="card-button">View Product →</span>
+              </a>
+              <a class="upsell-card" href="../classified/index.html">
+                <div class="card-topline">
+                  <span class="sku">SKU: BB-0666</span>
+                  <span class="category-badge category-evil">EVIL</span>
+                </div>
+                <h3 class="product-name">[CLASSIFIED]</h3>
+                <p class="pitch">It has been recalled, which only increases demand!</p>
+                <span class="card-button">View Product →</span>
+              </a>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer class="site-footer">
+        <div class="container">
+          <div class="legal-panel">
+            <p class="legal-copy">
+              <strong>Disclaimer:</strong> BrainBlast™ is not liable for dramatic monologues,
+              sudden reverence for quills, or any GPT that insists on speaking
+              only in verse. Consult a librarian before extended use!!!
+            </p>
+          </div>
+        </div>
+      </footer>
+    </div>
+  </body>
+</html>
