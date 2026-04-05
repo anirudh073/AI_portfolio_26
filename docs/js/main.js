@@ -4,7 +4,6 @@ let jingleBlocked = false;
 let pageNavigationInFlight = false;
 
 document.addEventListener("DOMContentLoaded", () => {
-  initPageNavigation();
   initializePage();
 });
 
