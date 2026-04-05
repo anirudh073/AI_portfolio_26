@@ -7,15 +7,15 @@ from pathlib import Path
 class GPTConfig:
     vocab_size: int = 0
     context_len: int = 256
-    n_embd: int = 512
-    n_head: int = 8
+    n_embd: int = 768
+    n_head: int = 12
     n_layer: int = 12
-    ffn_dim: int = 2048
+    ffn_dim: int = 3072
     dropout: float = 0.2
 
     train_split: float = 0.9
-    batch_size: int = 32
-    max_iters: int = 5000
+    batch_size: int = 16
+    max_iters: int = 15000
     eval_interval: int = 500
     eval_iters: int = 100
     learning_rate: float = 3e-4
