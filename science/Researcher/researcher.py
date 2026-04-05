@@ -34,8 +34,9 @@ if not API_KEY:
     sys.exit("ERROR: GEMINI_API_KEY not found in .env")
 
 DATA_FILE = Path(__file__).parent / "data" / "anage_data.txt"
-OUTPUT_DIR = Path(__file__).parent / "output"
-OUTPUT_DIR.mkdir(exist_ok=True)
+OUTPUT_BASE = Path(__file__).parent / "output"
+OUTPUT_BASE.mkdir(exist_ok=True)
+OUTPUT_DIR = OUTPUT_BASE  # overridden per-run in run() and --poster-only
 
 ANALYSIS_MODEL = "gemini-3.1-pro-preview"
 CRITIQUE_MODEL = "gemini-3.1-pro-preview"
@@ -175,13 +176,14 @@ def warn_tokens(total: int):
 
 
 def call_agent(client, model: str, system: str, messages: list[dict], label: str,
-               max_retries: int = 4) -> tuple[str, int]:
+               max_retries: int = 4) -> tuple[str, int, float]:
     import time
     contents = []
     for m in messages:
         role = "user" if m["role"] == "user" else "model"
         contents.append(types.Content(role=role, parts=[types.Part(text=m["content"])]))
 
+    t0 = time.time()
     for attempt in range(1, max_retries + 1):
         print(f"\n  [{label}] calling {model} (attempt {attempt}/{max_retries})...")
         try:
@@ -195,9 +197,14 @@ def call_agent(client, model: str, system: str, messages: list[dict], label: str
             )
             text = response.text
             tokens = response.usage_metadata.total_token_count if response.usage_metadata else 0
-            print(f"  [{label}] done (~{tokens:,} tokens)")
-            return text, tokens
+            elapsed = time.time() - t0
+            print(f"  [{label}] done  ~{tokens:,} tokens  {elapsed:.0f}s")
+            return text, tokens, elapsed
         except Exception as e:
+            err_str = str(e)
+            if "400" in err_str and "INVALID_ARGUMENT" in err_str:
+                print(f"  [{label}] FATAL: context too long — not retrying")
+                raise
             if attempt == max_retries:
                 raise
             wait = 15 * attempt  # 15s, 30s, 45s
@@ -208,7 +215,40 @@ def call_agent(client, model: str, system: str, messages: list[dict], label: str
 
 # ── Poster generation (standalone) ───────────────────────────────────────────
 
-def generate_poster(client, final_result: str, writeup_result: str, n_analyses: int, timestamp: str) -> Path:
+def sanitize_poster_html(html: str) -> str:
+    """Fix common model tag errors: mismatched </script>/<style> closing tags."""
+    import re
+    # Pass 1: </script> wrongly closing a <style> block → replace with </style>
+    html = re.sub(
+        r'(<style\b[^>]*>)(.*?)(</script>)',
+        lambda m: m.group(1) + m.group(2) + '</style>',
+        html, flags=re.DOTALL
+    )
+    # Pass 2: </style> wrongly closing an inline <script> block → replace with </script>
+    # Only match inline scripts (no src attribute)
+    html = re.sub(
+        r'(<script(?:\s(?!src)[^>]*)?>)(.*?)(</style>)',
+        lambda m: m.group(1) + m.group(2) + '</script>',
+        html, flags=re.DOTALL
+    )
+    return html
+
+
+def strip_html_for_critique(html: str) -> str:
+    """Extract visible text + structure from HTML for critique (strips JS/CSS to save tokens)."""
+    import re
+    # Remove <style> and <script> blocks entirely
+    html = re.sub(r'<style[^>]*>.*?</style>', '', html, flags=re.DOTALL)
+    html = re.sub(r'<script[^>]*>.*?</script>', '', html, flags=re.DOTALL)
+    # Strip remaining tags
+    text = re.sub(r'<[^>]+>', ' ', html)
+    # Collapse whitespace
+    text = re.sub(r'\s+', ' ', text).strip()
+    return text
+
+
+def generate_poster(client, final_result: str, writeup_result: str, n_analyses: int,
+                    timestamp: str, with_critique: bool = True) -> Path:
     """Generate the HTML conference poster. Can be called standalone for reruns."""
     print(f"\n{'─'*60}")
     print("  CONFERENCE POSTER (HTML)")
@@ -235,11 +275,18 @@ def generate_poster(client, final_result: str, writeup_result: str, n_analyses: 
             Narrative panels: max 3-4 sentences each, under 30 words per sentence.
 
             DESIGN REQUIREMENTS:
-            - A0 portrait format — set .poster width to 841mm in CSS, but also add a viewport
-              scaling wrapper so it fits a 1920px-wide screen by default:
-              wrap .poster in a div.viewport-scaler with transform: scale(0.45); transform-origin: top left;
-              and add a note at the top: "Zoom out to see full poster / Print at A0 no margins"
-            - Clean academic style: white background, two-column layout below the header
+            - LANDSCAPE format: 4 feet wide × 3 feet tall (121.9cm × 91.4cm). Set .poster to
+              width: 1219mm; height: 914mm in CSS.
+            - Viewport scaling wrapper: wrap .poster in a div.viewport-scaler with
+              transform: scale(0.45); transform-origin: top left;
+              Add a banner above: "Zoom out to see full poster / Print at 4ft×3ft landscape, no margins"
+            - NO WHITESPACE: The poster must fill the entire 4ft×3ft area with zero empty space.
+              Use CSS flexbox or grid with flex: 1 / flex-grow so panels and figures expand to
+              fill all available height. No large margins or padding. Column gap max 20px.
+              Header and footer should be compact (no excessive padding). Every pixel must be used.
+            - Clean academic style: white background, header full-width, then a MULTI-COLUMN layout.
+              Choose the number of columns (2–4) to best fit the content — more analyses = more columns.
+              Keep all columns equal width. Never use more than 4 columns.
             - Header: full-width banner with title (large, bold), authors, affiliation
             - Colour scheme: deep navy (#1a2e4a) headers, white header text, black body text,
               light grey (#f5f5f5) panel backgrounds, accent (#2e7d5e) highlights
@@ -253,6 +300,12 @@ def generate_poster(client, final_result: str, writeup_result: str, n_analyses: 
             - No dense tables. Use large-type stat callout cards instead.
 
             FIGURE DESIGN RULES (apply to all figures, regardless of research topic):
+            - ALL chart canvas wrappers must use a SINGLE shared CSS class (e.g. .chart-wrapper)
+              with an IDENTICAL fixed height (e.g. height: 420px). Never set height inline or
+              per-figure. Never use min-height or max-height on figures — this causes one figure
+              to balloon and fill remaining space. Every chart must be exactly the same height.
+            - All figure containers must use flex: 1 so they share column space equally.
+              No figure should ever be taller than any other.
             - Prefer DIRECT LABELS on data points over legends. If the dataset is small enough
               to label individually (n < 30), label each point/bar directly with its name.
               If a legend is unavoidable, place it below the chart — never overlapping data — font 22px+.
@@ -298,13 +351,13 @@ def generate_poster(client, final_result: str, writeup_result: str, n_analyses: 
             CONTENT STRUCTURE:
             - HEADER (full width): Title (the conclusion, stated boldly) ·
               "AI Research Demo, NCBS Bangalore, 2026" · QR placeholder right
-            - LEFT COLUMN (top to bottom):
-                • Opening panel: frame the central question and why it matters (2-3 sentences)
-                • Narrative panels: walk through the research logic, one question-answer per panel,
-                  with each panel's answer naturally motivating the next question
-                • 3 stat callout cards (big number + one-line explanation, no LaTeX)
-            - RIGHT COLUMN (top to bottom):
-                • 3 Chart.js figures in the same order as the narrative, each with descriptive title + 1-sentence caption
+            - COLUMNS (2–4, choose based on content volume):
+                • Column 1 always starts with: opening panel (central question, 2-3 sentences),
+                  then narrative panels walking the story (one question-answer per panel).
+                • Spread figures, stat cards, conclusions and future directions across the remaining
+                  columns in narrative order — figures go next to the panel that describes them.
+                • 3 stat callout cards (big number + one-line explanation, no LaTeX) distributed
+                  where they best support the adjacent text.
                 • Conclusions panel (4-5 bullets — stated as claims, not hedges)
                 • Future directions panel (3 bullets — specific next experiments)
             - FOOTER (full width): Data · Limitations · Acknowledgements
@@ -319,10 +372,9 @@ def generate_poster(client, final_result: str, writeup_result: str, n_analyses: 
         """).strip()
     }]
 
-    poster_html, tokens = call_agent(
+    poster_html, tokens, t_html = call_agent(
         client, ANALYSIS_MODEL, ANALYSIS_SYSTEM, poster_messages, "POSTER HTML"
     )
-    print(f"  [POSTER HTML] ~{tokens:,} tokens used")
 
     # Strip accidental markdown fences
     poster_html = poster_html.strip()
@@ -331,28 +383,36 @@ def generate_poster(client, final_result: str, writeup_result: str, n_analyses: 
     if poster_html.endswith("```"):
         poster_html = "\n".join(poster_html.splitlines()[:-1])
 
+    poster_html = sanitize_poster_html(poster_html)
+
     poster_path = OUTPUT_DIR / f"{timestamp}_poster.html"
     with open(poster_path, "w") as f:
         f.write(poster_html)
     print(f"  → Saved (v1): {poster_path}")
 
-    # ── Poster critique ────────────────────────────────────────────────────────
+    if not with_critique:
+        print(f"  → Skipping critique/revision (use --with-critique to enable)")
+        print(f"  → Open in browser, then File → Print → Save as PDF (A0, no margins)")
+        _print_poster_timing([("Poster HTML", t_html)])
+        return poster_path
+
+    # ── Poster critique (uses stripped text — no JS/CSS — to save tokens) ──────
     print(f"\n  [POSTER CRITIQUE] reviewing narrative and communication...")
+    poster_text = strip_html_for_critique(poster_html)
     poster_critique_messages = [{
         "role": "user",
         "content": textwrap.dedent(f"""
-            Review the following conference poster HTML for narrative flow, communication quality,
+            Review the following conference poster for narrative flow, communication quality,
             and scientific accuracy. Focus on whether a first-time viewer can follow the story.
 
-            === POSTER HTML ===
-            {poster_html}
+            === POSTER CONTENT (text extracted from HTML) ===
+            {poster_text}
         """).strip()
     }]
 
-    poster_critique, tokens = call_agent(
+    poster_critique, tokens, t_critique = call_agent(
         client, CRITIQUE_MODEL, POSTER_CRITIQUE_SYSTEM, poster_critique_messages, "POSTER CRITIQUE"
     )
-    print(f"  [POSTER CRITIQUE] ~{tokens:,} tokens")
     save_output(f"{timestamp}_poster_critique.md", poster_critique)
     print_section("POSTER CRITIQUE (preview)", poster_critique)
 
@@ -369,15 +429,14 @@ def generate_poster(client, final_result: str, writeup_result: str, n_analyses: 
             ================
 
             Revise the poster HTML to address all critique points.
-            Pay special attention to: narrative flow, heading language, Act I/II tension structure.
+            Pay special attention to: narrative flow, heading language, question-answer structure.
             Output ONLY valid HTML. No markdown, no explanation. Start with <!DOCTYPE html>.
         """).strip()}
     ]
 
-    poster_html_v2, tokens = call_agent(
+    poster_html_v2, tokens, t_revision = call_agent(
         client, ANALYSIS_MODEL, ANALYSIS_SYSTEM, poster_revision_messages, "POSTER REVISION"
     )
-    print(f"  [POSTER REVISION] ~{tokens:,} tokens")
 
     # Strip fences
     poster_html_v2 = poster_html_v2.strip()
@@ -386,20 +445,40 @@ def generate_poster(client, final_result: str, writeup_result: str, n_analyses: 
     if poster_html_v2.endswith("```"):
         poster_html_v2 = "\n".join(poster_html_v2.splitlines()[:-1])
 
+    poster_html_v2 = sanitize_poster_html(poster_html_v2)
+
     with open(poster_path, "w") as f:
         f.write(poster_html_v2)
     print(f"  → Saved (v2, revised): {poster_path}")
     print(f"  → Open in browser, then File → Print → Save as PDF (A0, no margins)")
+    _print_poster_timing([("Poster HTML", t_html), ("Poster Critique", t_critique), ("Poster Revision", t_revision)])
     return poster_path
+
+
+def _print_poster_timing(steps: list[tuple[str, float]]):
+    print(f"\n  {'─'*40}")
+    print(f"  {'Step':<25} {'Time':>8}")
+    print(f"  {'─'*25} {'─'*8}")
+    for name, t in steps:
+        print(f"  {name:<25} {t:>6.0f}s")
+    total = sum(t for _, t in steps)
+    print(f"  {'─'*25} {'─'*8}")
+    print(f"  {'POSTER TOTAL':<25} {total:>6.0f}s")
 
 
 # ── Main workflow ──────────────────────────────────────────────────────────────
 
 def run(n_analyses: int = 2, critique_rounds: int = 2):
+    global OUTPUT_DIR
+    import time as _time
     client = genai.Client(api_key=API_KEY)
     total_tokens = 0
+    step_times: list[tuple[str, float]] = []
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    OUTPUT_DIR = OUTPUT_BASE / timestamp
+    OUTPUT_DIR.mkdir(exist_ok=True)
     analyses = []  # stores (title, result) for each analysis
+    run_start = _time.time()
 
     print("\n" + "="*60)
     print("  RESEARCHER — AI-driven research workflow")
@@ -447,21 +526,9 @@ def run(n_analyses: int = 2, critique_rounds: int = 2):
             """).strip()
 
         else:
-            prior_summaries = "\n\n".join([
-                f"=== ANALYSIS {j}: {title} ===\n{result}"
-                for j, (title, result) in enumerate(analyses, 1)
-            ])
             prompt = textwrap.dedent(f"""
-                You are continuing a multi-part research project on the provided dataset.
-                Here is the full dataset again for reference:
-
-                {data_summary}
-
-                === PRIOR ANALYSES ===
-                {prior_summaries}
-                ======================
-
                 TASK — Analysis {i} of {n_analyses}:
+                The full dataset is in your context from the first message. Do not re-request it.
                 Based on the open questions and findings from the previous analysis,
                 propose and execute the next logical analysis. It must:
                 - Be clearly motivated by a specific finding or open question from the prior work
@@ -480,10 +547,11 @@ def run(n_analyses: int = 2, critique_rounds: int = 2):
 
         analysis_messages.append({"role": "user", "content": prompt})
 
-        result, tokens = call_agent(
+        result, tokens, elapsed = call_agent(
             client, ANALYSIS_MODEL, ANALYSIS_SYSTEM, analysis_messages, step_label
         )
         total_tokens += tokens
+        step_times.append((step_label, elapsed))
         analysis_messages.append({"role": "model", "content": result})
 
         # Extract a short title from the result for tracking
@@ -524,10 +592,11 @@ def run(n_analyses: int = 2, critique_rounds: int = 2):
             """).strip()
         }]
 
-        critique_result, tokens = call_agent(
+        critique_result, tokens, elapsed = call_agent(
             client, CRITIQUE_MODEL, CRITIQUE_SYSTEM, critique_messages, f"CRITIQUE R{round_num}"
         )
         total_tokens += tokens
+        step_times.append((f"Critique R{round_num}", elapsed))
         save_output(f"{timestamp}_critique_r{round_num}.md", critique_result)
         print_section(f"CRITIQUE ROUND {round_num} (preview)", critique_result)
         warn_tokens(total_tokens)
@@ -549,10 +618,11 @@ def run(n_analyses: int = 2, critique_rounds: int = 2):
             """).strip()
         })
 
-        revised_body, tokens = call_agent(
+        revised_body, tokens, elapsed = call_agent(
             client, ANALYSIS_MODEL, ANALYSIS_SYSTEM, analysis_messages, f"REVISION R{round_num}"
         )
         total_tokens += tokens
+        step_times.append((f"Revision R{round_num}", elapsed))
         analysis_messages.append({"role": "model", "content": revised_body})
         current_body = revised_body
         save_output(f"{timestamp}_revision_r{round_num}.md", revised_body)
@@ -586,10 +656,11 @@ def run(n_analyses: int = 2, critique_rounds: int = 2):
         """).strip()
     })
 
-    final_result, tokens = call_agent(
+    final_result, tokens, elapsed = call_agent(
         client, ANALYSIS_MODEL, ANALYSIS_SYSTEM, analysis_messages, "FINAL SYNTHESIS"
     )
     total_tokens += tokens
+    step_times.append(("Final Synthesis", elapsed))
     save_output(f"{timestamp}_final_synthesis.md", final_result)
     print_section("FINAL SYNTHESIS (preview)", final_result)
 
@@ -617,22 +688,33 @@ def run(n_analyses: int = 2, critique_rounds: int = 2):
         """).strip()
     }]
 
-    writeup_result, tokens = call_agent(
+    writeup_result, tokens, elapsed = call_agent(
         client, ANALYSIS_MODEL, ANALYSIS_SYSTEM, writeup_messages, "WRITEUP"
     )
     total_tokens += tokens
+    step_times.append(("Writeup", elapsed))
     save_output(f"{timestamp}_writeup.md", writeup_result)
     print_section("PLAIN-ENGLISH WRITEUP (preview)", writeup_result)
 
-    poster_path = generate_poster(client, final_result, writeup_result, n_analyses, timestamp)
+    poster_path = generate_poster(client, final_result, writeup_result, n_analyses, timestamp,
+                                  with_critique=True)
     total_tokens += 0  # token count handled inside generate_poster, logged there
 
     # ── Summary ───────────────────────────────────────────────────────────────
+    total_wall = _time.time() - run_start
     print(f"\n{'='*60}")
     print(f"  WORKFLOW COMPLETE")
     print(f"  Analyses: {n_analyses}  |  Critique rounds: {critique_rounds}")
     print(f"  Total tokens: ~{total_tokens:,}")
-    print(f"  Outputs:")
+    print(f"\n  STEP TIMING")
+    print(f"  {'─'*40}")
+    print(f"  {'Step':<28} {'Time':>8}")
+    print(f"  {'─'*28} {'─'*8}")
+    for name, t in step_times:
+        print(f"  {name:<28} {t:>6.0f}s")
+    print(f"  {'─'*28} {'─'*8}")
+    print(f"  {'TOTAL (wall clock)':<28} {total_wall:>6.0f}s")
+    print(f"\n  Outputs:")
     for f in sorted(OUTPUT_DIR.glob(f"{timestamp}_*.md")):
         print(f"    {f.name}")
     print("="*60)
@@ -649,11 +731,14 @@ if __name__ == "__main__":
                         help="Number of critique rounds (default: 2)")
     parser.add_argument("--poster-only", metavar="TIMESTAMP",
                         help="Regenerate poster only from existing outputs (e.g. --poster-only 20260401_170011)")
+    parser.add_argument("--with-critique", action="store_true",
+                        help="Run poster critique+revision loop (adds 2 extra API calls; on by default for full runs)")
     args = parser.parse_args()
 
     if args.poster_only:
         # Load existing synthesis and writeup, regenerate poster only
         ts = args.poster_only
+        OUTPUT_DIR = OUTPUT_BASE / ts
         synthesis_file = OUTPUT_DIR / f"{ts}_final_synthesis.md"
         writeup_file   = OUTPUT_DIR / f"{ts}_writeup.md"
         if not synthesis_file.exists():
@@ -668,10 +753,11 @@ if __name__ == "__main__":
         client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
         # Infer n_analyses from existing files
-        n_analyses = sum(1 for f in OUTPUT_DIR.glob(f"{ts}_analysis_*.md"))
+        n_analyses = sum(1 for f in OUTPUT_DIR.glob(f"{ts}_analysis_*.md") if f.is_file())
         n_analyses = max(n_analyses, 1)
 
-        generate_poster(client, final_result, writeup_result, n_analyses, ts)
+        generate_poster(client, final_result, writeup_result, n_analyses, ts,
+                        with_critique=args.with_critique)
         print(f"\n  Poster regenerated for run: {ts}")
     else:
         run(n_analyses=args.analyses, critique_rounds=args.rounds)

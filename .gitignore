@@ -28,3 +28,7 @@ _site/
 *.key
 *.pem
 .env*
+
+# Large model artifacts
+*.pt
+*.pth
