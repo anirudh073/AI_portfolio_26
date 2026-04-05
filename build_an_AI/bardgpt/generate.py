@@ -44,6 +44,7 @@ def generate_text(
     length: int,
     temperature: float,
     top_k: int,
+    repetition_penalty: float,
     device: torch.device,
 ) -> torch.Tensor:
     idx = torch.tensor([prompt_ids], dtype=torch.long, device=device)
@@ -53,6 +54,14 @@ def generate_text(
         idx_cond = idx[:, -model.config.context_len :]
         logits, _ = model(idx_cond)
         logits = logits[:, -1, :]
+
+        # This block penalises tokens that already appear in the context, reducing repetition loops.
+        if repetition_penalty != 1.0:
+            for token_id in idx_cond[0].unique():
+                if logits[0, token_id] > 0:
+                    logits[0, token_id] /= repetition_penalty
+                else:
+                    logits[0, token_id] *= repetition_penalty
 
         # This block scales the logits by temperature before sampling.
         temp = max(temperature, 1e-5)
@@ -80,6 +89,7 @@ def main() -> None:
     parser.add_argument("--length", type=int, default=500, help="Number of new tokens to sample.")
     parser.add_argument("--temperature", type=float, default=0.8, help="Sampling temperature.")
     parser.add_argument("--top_k", type=int, default=40, help="Top-k cutoff for sampling.")
+    parser.add_argument("--repetition_penalty", type=float, default=1.3, help="Penalise repeated tokens (1.0 = off, 1.3 = moderate).")
     args = parser.parse_args()
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -95,6 +105,7 @@ def main() -> None:
         length=args.length,
         temperature=args.temperature,
         top_k=args.top_k,
+        repetition_penalty=args.repetition_penalty,
         device=device,
     )
     generated_text = sp.decode_ids(output_ids.tolist())
