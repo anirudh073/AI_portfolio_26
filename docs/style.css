@@ -510,8 +510,85 @@ button,
 
 .catalogue-section,
 .media-section,
+.pipeline-section,
 .upsell-section {
   padding: 2.5rem 0 3rem;
+}
+
+.pipeline-title {
+  font-family: "Bebas Neue", sans-serif;
+  font-size: clamp(2rem, 4vw, 3rem);
+  letter-spacing: 0.02em;
+  margin: 0.25rem 0 0.5rem;
+  line-height: 1.05;
+}
+
+.pipeline-lead {
+  font-size: 1rem;
+  font-weight: 600;
+  max-width: 60ch;
+  margin: 0 0 2rem;
+}
+
+.pipeline-chart-wrap {
+  margin: 0 0 2.5rem;
+}
+
+.pipeline-placeholder {
+  min-height: 340px;
+  font-size: clamp(1.25rem, 2.5vw, 1.75rem);
+  border-radius: 20px;
+}
+
+.pipeline-credit {
+  margin: 0.75rem 0 0;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #555;
+}
+
+.inline-link {
+  color: var(--accent, #e8323b);
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+}
+
+.pipeline-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.25rem;
+}
+
+.pipeline-step {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  background: var(--surface);
+  border: 2px solid var(--line);
+  border-radius: 16px;
+  padding: 1rem 1.25rem;
+}
+
+.pipeline-step .step-num {
+  font-family: "Bebas Neue", sans-serif;
+  font-size: 2rem;
+  line-height: 1;
+  color: var(--accent, #e8323b);
+  flex-shrink: 0;
+  min-width: 2ch;
+}
+
+.pipeline-step strong {
+  display: block;
+  font-size: 0.95rem;
+  font-weight: 800;
+  margin-bottom: 0.25rem;
+}
+
+.pipeline-step p {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.55;
 }
 
 .filter-panel {
