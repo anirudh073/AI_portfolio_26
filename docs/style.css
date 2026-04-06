@@ -196,44 +196,85 @@ button,
 }
 
 .jingle-toggle {
+  position: relative;
   display: grid;
-  gap: 0.12rem;
-  justify-items: center;
+  place-items: center;
   min-width: min(100%, 250px);
-  padding: 0.65rem 0.95rem;
+  min-height: 6rem;
+  padding: 1.15rem 1.35rem;
   border: 3px solid var(--line);
-  border-radius: 20px;
+  border-radius: 24px;
   background:
-    linear-gradient(135deg, #ffec57 0%, #ff6a00 22%, #e8002d 58%, #ffec57 100%);
-  background-size: 220% 220%;
-  box-shadow: var(--shadow-small);
+    linear-gradient(135deg, #fff27a 0%, #ff8a00 18%, #e8002d 52%, #a6001e 100%);
+  background-size: 240% 240%;
+  box-shadow:
+    0 0 0 3px rgba(255, 255, 255, 0.18) inset,
+    0 0 22px rgba(232, 0, 45, 0.42),
+    0 0 42px rgba(255, 138, 0, 0.28),
+    var(--shadow-small);
   color: #ffffff;
   text-transform: uppercase;
   cursor: pointer;
   text-shadow: 0 2px 0 rgba(0, 0, 0, 0.28);
+  overflow: hidden;
+  isolation: isolate;
   transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
-  animation: jingle-flash 1.15s ease-in-out infinite;
+  animation: jingle-flash 0.9s ease-in-out infinite;
+}
+
+.jingle-toggle::before,
+.jingle-toggle::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.jingle-toggle::before {
+  inset: -22% auto -22% -30%;
+  width: 45%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.72), transparent);
+  opacity: 0.5;
+  transform: skewX(-24deg) translateX(-160%);
+  animation: jingle-sheen 1.9s linear infinite;
+}
+
+.jingle-toggle::after {
+  background:
+    radial-gradient(circle at 18% 28%, rgba(255, 255, 255, 0.96) 0 2px, transparent 3px),
+    radial-gradient(circle at 82% 24%, rgba(255, 240, 122, 0.98) 0 2.5px, transparent 4px),
+    radial-gradient(circle at 28% 74%, rgba(255, 255, 255, 0.92) 0 1.8px, transparent 3px),
+    radial-gradient(circle at 72% 72%, rgba(255, 240, 122, 0.98) 0 2px, transparent 3px),
+    radial-gradient(circle at 50% 18%, rgba(255, 255, 255, 0.78) 0 1.5px, transparent 3px);
+  opacity: 0.9;
+  animation: jingle-sparkle 1.1s steps(2, end) infinite;
 }
 
 .jingle-toggle:hover,
 .jingle-toggle:focus-visible {
   transform: translate(-2px, -2px);
-  box-shadow: 6px 6px 0 #111111;
+  box-shadow:
+    0 0 0 3px rgba(255, 255, 255, 0.2) inset,
+    0 0 28px rgba(232, 0, 45, 0.5),
+    0 0 54px rgba(255, 138, 0, 0.36),
+    6px 6px 0 #111111;
 }
 
 .jingle-toggle.is-playing {
   background:
-    linear-gradient(135deg, rgba(255, 240, 94, 0.98) 0%, rgba(255, 110, 0, 0.98) 18%, rgba(232, 0, 45, 0.98) 62%, rgba(255, 240, 94, 0.98) 100%);
-  background-size: 240% 240%;
+    linear-gradient(135deg, rgba(255, 244, 132, 0.99) 0%, rgba(255, 102, 0, 0.99) 16%, rgba(232, 0, 45, 0.99) 48%, rgba(255, 244, 132, 0.99) 100%);
+  background-size: 260% 260%;
   color: #ffffff;
-  animation-duration: 0.85s;
+  animation-duration: 0.65s;
 }
 
 .jingle-toggle-label {
+  position: relative;
+  z-index: 1;
   font-family: "Bebas Neue", sans-serif;
-  font-size: 1.45rem;
-  line-height: 0.95;
-  letter-spacing: 0.06em;
+  font-size: clamp(2rem, 3vw, 2.6rem);
+  line-height: 0.88;
+  letter-spacing: 0.08em;
 }
 
 @keyframes jingle-flash {
@@ -245,7 +286,30 @@ button,
 
   50% {
     background-position: 100% 50%;
-    filter: saturate(1.18) brightness(1.08);
+    filter: saturate(1.28) brightness(1.15);
+  }
+}
+
+@keyframes jingle-sheen {
+  from {
+    transform: skewX(-24deg) translateX(-170%);
+  }
+
+  to {
+    transform: skewX(-24deg) translateX(380%);
+  }
+}
+
+@keyframes jingle-sparkle {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.03);
   }
 }
 
