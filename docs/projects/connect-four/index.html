@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Connect Four Showdown | BrainBlast™</title>
+    <meta
+      name="description"
+      content="Connect Four Showdown is a BrainBlast™ browser game with a local minimax AI, loud arcade energy, and zero backend dependence."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../style.css" />
+    <script defer src="../../js/main.js"></script>
+    <style>
+      .connect-four-showcase {
+        padding: 1rem;
+      }
+
+      .connect-four-layout {
+        display: grid;
+        gap: 1.25rem;
+        grid-template-columns: minmax(320px, 0.8fr) minmax(0, 1.4fr);
+        align-items: start;
+        margin-top: 1rem;
+      }
+
+      .connect-four-sidebar,
+      .connect-four-stage,
+      .connect-four-score-card {
+        border: 3px solid var(--line);
+        border-radius: calc(var(--radius) + 4px);
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.97) 0%, rgba(255, 249, 216, 0.96) 100%);
+        box-shadow: var(--shadow-small);
+      }
+
+      .connect-four-sidebar {
+        position: sticky;
+        top: 1rem;
+        padding: 1.2rem;
+      }
+
+      .connect-four-stage {
+        padding: 1.2rem;
+      }
+
+      .panel-kicker {
+        display: inline-flex;
+        padding: 0.3rem 0.75rem;
+        border: 2px solid var(--line);
+        border-radius: 999px;
+        background: #ffffff;
+        font-size: 0.88rem;
+        font-weight: 900;
+        text-transform: uppercase;
+      }
+
+      .connect-four-title {
+        margin: 0.4rem 0 0;
+        font-family: "Bebas Neue", sans-serif;
+        font-size: clamp(3rem, 6vw, 5rem);
+        letter-spacing: 0.04em;
+        line-height: 0.95;
+      }
+
+      .connect-four-copy,
+      .connect-four-note {
+        margin: 0.8rem 0 0;
+        line-height: 1.6;
+        font-weight: 700;
+      }
+
+      .connect-four-copy strong,
+      .connect-four-note strong {
+        color: var(--red);
+      }
+
+      .game-toolbar {
+        display: grid;
+        gap: 0.8rem;
+        margin-top: 1rem;
+      }
+
+      .control-group {
+        display: grid;
+        gap: 0.45rem;
+      }
+
+      .control-group label {
+        font-size: 0.83rem;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      .game-select {
+        width: 100%;
+        min-height: 52px;
+        padding: 0.8rem 0.95rem;
+        border: 3px solid var(--line);
+        border-radius: 18px;
+        background: #ffffff;
+        font: inherit;
+        font-weight: 800;
+      }
+
+      .game-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.7rem;
+        margin-top: 1rem;
+      }
+
+      .game-actions .button-link,
+      .mode-pill {
+        cursor: pointer;
+      }
+
+      .connect-four-meta {
+        display: grid;
+        gap: 0.85rem;
+        margin-top: 1rem;
+      }
+
+      .mode-pill {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 46px;
+        padding: 0.72rem 1rem;
+        border: 3px solid var(--line);
+        border-radius: 999px;
+        background: #ffffff;
+        box-shadow: var(--shadow-small);
+        font-weight: 900;
+        text-transform: uppercase;
+      }
+
+      .ai-pill {
+        background:
+          linear-gradient(180deg, #ffffff 0%, #ffe786 100%);
+      }
+
+      .connect-four-score-grid {
+        display: grid;
+        gap: 0.8rem;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        margin-top: 1rem;
+      }
+
+      .connect-four-score-card {
+        padding: 0.85rem;
+        text-align: center;
+      }
+
+      .score-value {
+        font-family: "Bebas Neue", sans-serif;
+        font-size: 2.2rem;
+        line-height: 1;
+      }
+
+      .score-label {
+        font-size: 0.82rem;
+        font-weight: 900;
+        text-transform: uppercase;
+      }
+
+      .stage-header {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 1rem;
+      }
+
+      .status-stack {
+        display: grid;
+        gap: 0.4rem;
+      }
+
+      .connect-four-status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.55rem;
+        width: fit-content;
+        padding: 0.5rem 0.85rem;
+        border: 3px solid var(--line);
+        border-radius: 999px;
+        background: #ffffff;
+        box-shadow: var(--shadow-small);
+        font-weight: 900;
+        text-transform: uppercase;
+      }
+
+      .turn-indicator {
+        width: 14px;
+        height: 14px;
+        border: 2px solid var(--line);
+        border-radius: 50%;
+        background: currentColor;
+        color: var(--red);
+      }
+
+      .status-text {
+        font-family: "Bebas Neue", sans-serif;
+        font-size: 1.25rem;
+        letter-spacing: 0.04em;
+      }
+
+      .substatus {
+        margin: 0;
+        font-size: 0.95rem;
+        font-weight: 700;
+      }
+
+      .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+      }
+
+      .legend-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        padding: 0.42rem 0.72rem;
+        border: 2px solid var(--line);
+        border-radius: 999px;
+        background: #ffffff;
+        font-size: 0.85rem;
+        font-weight: 900;
+        text-transform: uppercase;
+      }
+
+      .mini-disc {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 2px solid var(--line);
+        border-radius: 50%;
+      }
+
+      .mini-disc.red {
+        background: var(--red);
+      }
+
+      .mini-disc.yellow {
+        background: var(--yellow);
+      }
+
+      .connect-four-board-frame {
+        padding: 1rem;
+        border: 3px solid var(--line);
+        border-radius: calc(var(--radius) + 2px);
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 244, 193, 0.96));
+        box-shadow: var(--shadow-small);
+      }
+
+      .drop-row {
+        display: grid;
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+        gap: 0.6rem;
+        margin-bottom: 0.85rem;
+      }
+
+      .drop-btn {
+        min-height: 52px;
+        border: 3px solid var(--line);
+        border-radius: 18px;
+        background: #ffffff;
+        box-shadow: var(--shadow-small);
+        font-family: "Bebas Neue", sans-serif;
+        font-size: 1.35rem;
+        cursor: pointer;
+      }
+
+      .drop-btn:hover:not(:disabled),
+      .drop-btn:focus-visible:not(:disabled) {
+        transform: translate(-2px, -2px);
+        box-shadow: 6px 6px 0 #111111;
+      }
+
+      .drop-btn:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+
+      .board {
+        display: grid;
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+        gap: 0.65rem;
+        padding: 0.75rem;
+        border: 3px solid var(--line);
+        border-radius: 24px;
+        background:
+          linear-gradient(180deg, #2e53ef 0%, #1734ad 100%);
+        box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.16);
+      }
+
+      .cell {
+        display: grid;
+        place-items: center;
+        aspect-ratio: 1 / 1;
+        border: 3px solid rgba(255, 255, 255, 0.14);
+        border-radius: 22px;
+        background: rgba(8, 18, 54, 0.45);
+      }
+
+      .disc {
+        width: 84%;
+        height: 84%;
+        border: 3px solid rgba(17, 17, 17, 0.9);
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.75);
+        transition: transform 160ms ease;
+      }
+
+      .disc.human {
+        background:
+          radial-gradient(circle at 35% 30%, #ffb0bc 0%, var(--red) 45%, var(--red-deep) 100%);
+      }
+
+      .disc.ai {
+        background:
+          radial-gradient(circle at 35% 30%, #fff4b5 0%, var(--yellow) 48%, #e1a900 100%);
+      }
+
+      .disc.winning {
+        transform: scale(1.06);
+        box-shadow: 0 0 0 5px rgba(255, 255, 255, 0.3);
+      }
+
+      .connect-four-footer-note {
+        margin-top: 1rem;
+        padding: 0.9rem 1rem;
+        border: 2px dashed var(--line);
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.78);
+        font-size: 0.94rem;
+        font-weight: 700;
+        line-height: 1.55;
+      }
+
+      @media (max-width: 980px) {
+        .connect-four-layout {
+          grid-template-columns: 1fr;
+        }
+
+        .connect-four-sidebar {
+          position: static;
+        }
+      }
+
+      @media (max-width: 640px) {
+        .connect-four-showcase,
+        .connect-four-sidebar,
+        .connect-four-stage {
+          padding: 1rem;
+        }
+
+        .drop-row {
+          gap: 0.35rem;
+        }
+
+        .drop-btn {
+          min-height: 42px;
+          padding: 0.4rem;
+          font-size: 1rem;
+        }
+
+        .board {
+          gap: 0.35rem;
+          padding: 0.45rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="site-shell">
+      <div class="ticker" aria-label="BrainBlast hype ticker">
+        <div class="ticker-track">
+          <span>✦ CONNECT FOUR CROSSFIRE ✦ LOCAL MINIMAX MENACE ✦ DROP A DISC AND DEFEND THE CENTER ✦</span>
+          <span>✦ BROWSER BOARD-GAME PANIC ✦ NO BACKEND REQUIRED ✦ STRATEGY SOLD SEPARATELY ✦</span>
+          <span>✦ CONNECT FOUR CROSSFIRE ✦ LOCAL MINIMAX MENACE ✦ DROP A DISC AND DEFEND THE CENTER ✦</span>
+          <span>✦ BROWSER BOARD-GAME PANIC ✦ NO BACKEND REQUIRED ✦ STRATEGY SOLD SEPARATELY ✦</span>
+        </div>
+      </div>
+
+      <header class="masthead">
+        <div class="container masthead-row">
+          <div class="brand-block">
+            <a class="logo-mark" href="../../index.html" aria-label="BrainBlast home">
+              Brain<span class="accent">Blast™</span>
+            </a>
+            <p class="tagline">THE FUTURE IS HERE AND IT'S ON SALE!!!</p>
+          </div>
+          <div class="masthead-side">
+            <div class="hotline">CALL 1-800-BRAINIO</div>
+            <p class="support-copy">Operators cannot save you once the AI owns the center column. At that point it is between you and destiny!!!</p>
+          </div>
+        </div>
+      </header>
+
+      <main>
+        <section class="detail-hero">
+          <div class="container">
+            <a class="back-link" href="../../index.html">← Back To Catalogue</a>
+            <div class="detail-panel">
+              <div>
+                <div class="detail-meta">
+                  <span class="sku">SKU: BB-0103</span>
+                  <span class="type-badge type-code">Code</span>
+                  <span class="category-badge category-good">Good</span>
+                  <span class="stock-pill stock-in">In Stock</span>
+                </div>
+                <h1 class="detail-title">Connect Four Showdown</h1>
+                <p class="detail-lead">
+                  A browser-playable Connect Four duel with a local minimax opponent, quick controls, and enough loud arcade energy to feel at home in the BrainBlast catalogue!!!
+                </p>
+                <div class="detail-price">
+                  <span class="price-old">$79.99</span>
+                  <span class="price-free">Yours For Free!</span>
+                </div>
+                <div class="action-links">
+                  <a class="button-link primary" href="#play-connect-four">Play The Match</a>
+                  <a class="button-link secondary" href="../../index.html#catalogue">Browse Live Catalogue</a>
+                </div>
+              </div>
+
+              <aside class="panel-box">
+                <h2 class="panel-title">Product Highlights</h2>
+                <ul class="highlights-list">
+                  <li>Local minimax AI with alpha-beta pruning for fast, nasty browser play!</li>
+                  <li>Difficulty settings, first-move control, and undo for quick rematches!</li>
+                  <li>Embedded directly into the site instead of floating off as a disconnected demo!</li>
+                  <li>May cause suspicious attachment to center-column discipline!</li>
+                </ul>
+              </aside>
+            </div>
+          </div>
+        </section>
+
+        <section class="media-section" id="play-connect-four">
+          <div class="container">
+            <div class="simulation-showcase connect-four-showcase">
+              <div class="comparison-head">
+                <span class="comparison-kicker">STRATEGY ARENA™</span>
+                <p class="mini-copy">Everything runs in-page, so the only infrastructure problem left is your opening move!!!</p>
+              </div>
+
+              <div class="connect-four-layout">
+                <aside class="connect-four-sidebar">
+                  <span class="panel-kicker">Control Room</span>
+                  <h2 class="connect-four-title">Set The Match</h2>
+                  <p class="connect-four-copy">
+                    The opponent here is <strong>minimax with alpha-beta pruning</strong>: a practical browser-side AI that reads ahead, values the center, blocks obvious threats, and capitalizes on sloppy play without needing a server.
+                  </p>
+
+                  <div class="game-toolbar">
+                    <div class="control-group">
+                      <label for="difficulty">Difficulty</label>
+                      <select id="difficulty" class="game-select">
+                        <option value="3">Casual</option>
+                        <option value="4" selected>Challenging</option>
+                        <option value="5">Strong</option>
+                        <option value="6">Mean</option>
+                      </select>
+                    </div>
+
+                    <div class="control-group">
+                      <label for="starter">Who Moves First</label>
+                      <select id="starter" class="game-select">
+                        <option value="human" selected>You</option>
+                        <option value="ai">AI</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="game-actions">
+                    <button class="button-link primary" id="newGameBtn" type="button">Start New Game</button>
+                    <button class="button-link secondary" id="undoBtn" type="button">Undo Last Turn</button>
+                  </div>
+
+                  <div class="connect-four-meta">
+                    <div class="mode-pill ai-pill" id="aiTypePill">AI: Minimax + Alpha-Beta</div>
+                  </div>
+
+                  <div class="connect-four-score-grid">
+                    <div class="connect-four-score-card">
+                      <div class="score-value" id="humanWins">0</div>
+                      <div class="score-label">You</div>
+                    </div>
+                    <div class="connect-four-score-card">
+                      <div class="score-value" id="draws">0</div>
+                      <div class="score-label">Draws</div>
+                    </div>
+                    <div class="connect-four-score-card">
+                      <div class="score-value" id="aiWins">0</div>
+                      <div class="score-label">AI</div>
+                    </div>
+                  </div>
+
+                  <p class="connect-four-note">
+                    Higher depths punish lazy side play. If you surrender the center and ignore stacked threats, the machine will notice and act accordingly.
+                  </p>
+                </aside>
+
+                <section class="connect-four-stage" aria-label="Connect Four game board">
+                  <div class="stage-header">
+                    <div class="status-stack">
+                      <div class="connect-four-status-badge">
+                        <span class="turn-indicator" id="turnDot"></span>
+                        <span class="status-text" id="statusText">Your turn</span>
+                      </div>
+                      <p class="substatus" id="substatusText">Drop a disc into a column.</p>
+                    </div>
+
+                    <div class="legend">
+                      <div class="legend-item"><span class="mini-disc red"></span> You</div>
+                      <div class="legend-item"><span class="mini-disc yellow"></span> AI</div>
+                    </div>
+                  </div>
+
+                  <div class="connect-four-board-frame">
+                    <div class="drop-row" id="dropRow"></div>
+                    <div class="board" id="board"></div>
+                  </div>
+
+                  <div class="connect-four-footer-note" id="how-it-works">
+                    Tip: the AI strongly prefers central control and positions that create multiple live threats. Weird-looking quiet moves are often setup, not confusion.
+                  </div>
+                </section>
+              </div>
+            </div>
+
+            <aside class="resource-strip">
+              <ul>
+                <li>Embedded directly into the project page instead of sitting outside the site shell</li>
+                <li>Pure client-side game logic with no backend dependency</li>
+                <li>Difficulty, undo, and first-player options preserved from the original build</li>
+              </ul>
+            </aside>
+          </div>
+        </section>
+
+        <section class="upsell-section">
+          <div class="container">
+            <div class="section-head">
+              <div>
+                <p class="section-kicker">YOU MAY ALSO LIKE</p>
+                <h2 class="upsell-title">More Browser-Based Trouble</h2>
+              </div>
+            </div>
+            <div class="upsell-grid">
+              <a class="upsell-card" href="../black-hole-simulator/index.html">
+                <div class="card-topline">
+                  <span class="sku">SKU: BB-0101</span>
+                  <span class="category-badge category-good">GOOD</span>
+                </div>
+                <h3 class="product-name">Black Hole Simulator</h3>
+                <p class="pitch">For users who want their browser games to involve spacetime instead of checkmating themselves!</p>
+                <span class="card-button">View Product →</span>
+              </a>
+              <a class="upsell-card" href="../bird-migration-tracker/index.html">
+                <div class="card-topline">
+                  <span class="sku">SKU: BB-0102</span>
+                  <span class="category-badge category-good">GOOD</span>
+                </div>
+                <h3 class="product-name">Bird Migration Tracker</h3>
+                <p class="pitch">Still strategic, but with fewer traps and significantly more birds!</p>
+                <span class="card-button">View Product →</span>
+              </a>
+              <a class="upsell-card" href="../tinygpt/index.html">
+                <div class="card-topline">
+                  <span class="sku">SKU: BB-0002</span>
+                  <span class="category-badge category-good">GOOD</span>
+                </div>
+                <h3 class="product-name">TinyGPT</h3>
+                <p class="pitch">If losing to one local model is not enough for you this week!</p>
+                <span class="card-button">View Product →</span>
+              </a>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer class="site-footer">
+        <div class="container">
+          <div class="legal-panel">
+            <p class="legal-copy">
+              <strong>Disclaimer:</strong> BrainBlast™ is not liable for reckless center-column neglect, dramatic revenge rematches, or users who start narrating minimax trees out loud!!!
+            </p>
+          </div>
+        </div>
+      </footer>
+    </div>
+
+    <script>
+      const ROWS = 6;
+      const COLS = 7;
+      const HUMAN = 1;
+      const AI = 2;
+      const EMPTY = 0;
+
+      let board = createBoard();
+      let currentPlayer = HUMAN;
+      let gameOver = false;
+      let difficulty = 4;
+      let starter = "human";
+      let history = [];
+      let winningCells = [];
+      let scores = { human: 0, ai: 0, draws: 0 };
+
+      const boardEl = document.getElementById("board");
+      const dropRowEl = document.getElementById("dropRow");
+      const statusTextEl = document.getElementById("statusText");
+      const substatusTextEl = document.getElementById("substatusText");
+      const turnDotEl = document.getElementById("turnDot");
+      const difficultyEl = document.getElementById("difficulty");
+      const starterEl = document.getElementById("starter");
+      const newGameBtn = document.getElementById("newGameBtn");
+      const undoBtn = document.getElementById("undoBtn");
+      const humanWinsEl = document.getElementById("humanWins");
+      const aiWinsEl = document.getElementById("aiWins");
+      const drawsEl = document.getElementById("draws");
+
+      function createBoard() {
+        return Array.from({ length: ROWS }, () => Array(COLS).fill(EMPTY));
+      }
+
+      function cloneBoard(src) {
+        return src.map(row => [...row]);
+      }
+
+      function render() {
+        renderDropButtons();
+        renderBoard();
+        updateStatus();
+        updateScoreboard();
+      }
+
+      function renderDropButtons() {
+        dropRowEl.innerHTML = "";
+
+        for (let c = 0; c < COLS; c++) {
+          const btn = document.createElement("button");
+          btn.className = "drop-btn";
+          btn.innerHTML = "&#8595;";
+          btn.disabled = gameOver || currentPlayer !== HUMAN || !isValidMove(board, c);
+          btn.title = `Drop in column ${c + 1}`;
+          btn.addEventListener("click", () => handleHumanMove(c));
+          dropRowEl.appendChild(btn);
+        }
+      }
+
+      function renderBoard() {
+        boardEl.innerHTML = "";
+
+        for (let r = 0; r < ROWS; r++) {
+          for (let c = 0; c < COLS; c++) {
+            const cell = document.createElement("div");
+            cell.className = "cell";
+
+            const disc = document.createElement("div");
+            disc.className = "disc";
+
+            if (board[r][c] === HUMAN) {
+              disc.classList.add("human");
+            }
+
+            if (board[r][c] === AI) {
+              disc.classList.add("ai");
+            }
+
+            if (winningCells.some(([wr, wc]) => wr === r && wc === c)) {
+              disc.classList.add("winning");
+            }
+
+            cell.appendChild(disc);
+            boardEl.appendChild(cell);
+          }
+        }
+      }
+
+      function updateStatus() {
+        if (gameOver) {
+          if (winningCells.length) {
+            const winner = board[winningCells[0][0]][winningCells[0][1]];
+
+            if (winner === HUMAN) {
+              statusTextEl.textContent = "You win";
+              substatusTextEl.textContent = "You found the line of four first.";
+              turnDotEl.style.color = "var(--red)";
+            } else {
+              statusTextEl.textContent = "AI wins";
+              substatusTextEl.textContent = "The machine converted its position cleanly.";
+              turnDotEl.style.color = "var(--yellow)";
+            }
+          } else {
+            statusTextEl.textContent = "Draw";
+            substatusTextEl.textContent = "Board full. Nobody found four.";
+            turnDotEl.style.color = "#5b5b5b";
+          }
+
+          return;
+        }
+
+        if (currentPlayer === HUMAN) {
+          statusTextEl.textContent = "Your turn";
+          substatusTextEl.textContent = "Drop a disc into a column.";
+          turnDotEl.style.color = "var(--red)";
+        } else {
+          statusTextEl.textContent = "AI thinking";
+          substatusTextEl.textContent = `Search depth ${difficulty}.`;
+          turnDotEl.style.color = "var(--yellow)";
+        }
+      }
+
+      function updateScoreboard() {
+        humanWinsEl.textContent = scores.human;
+        aiWinsEl.textContent = scores.ai;
+        drawsEl.textContent = scores.draws;
+      }
+
+      function isValidMove(state, col) {
+        return state[0][col] === EMPTY;
+      }
+
+      function getValidMoves(state) {
+        const moves = [];
+
+        for (let c = 0; c < COLS; c++) {
+          if (isValidMove(state, c)) {
+            moves.push(c);
+          }
+        }
+
+        return moves;
+      }
+
+      function getOpenRow(state, col) {
+        for (let r = ROWS - 1; r >= 0; r--) {
+          if (state[r][col] === EMPTY) {
+            return r;
+          }
+        }
+
+        return -1;
+      }
+
+      function dropPiece(state, row, col, piece) {
+        state[row][col] = piece;
+      }
+
+      function handleHumanMove(col) {
+        if (gameOver || currentPlayer !== HUMAN || !isValidMove(board, col)) {
+          return;
+        }
+
+        playMove(col, HUMAN);
+
+        if (!gameOver) {
+          currentPlayer = AI;
+          render();
+          setTimeout(aiTurn, 120);
+        }
+      }
+
+      function playMove(col, piece) {
+        const row = getOpenRow(board, col);
+
+        if (row === -1) {
+          return false;
+        }
+
+        history.push({
+          board: cloneBoard(board),
+          currentPlayer,
+          gameOver,
+          winningCells: [...winningCells],
+        });
+
+        dropPiece(board, row, col, piece);
+        const result = getWinCells(board, piece);
+
+        if (result.length) {
+          winningCells = result;
+          gameOver = true;
+
+          if (piece === HUMAN) {
+            scores.human++;
+          } else {
+            scores.ai++;
+          }
+        } else if (getValidMoves(board).length === 0) {
+          gameOver = true;
+          winningCells = [];
+          scores.draws++;
+        }
+
+        render();
+        return true;
+      }
+
+      function aiTurn() {
+        if (gameOver || currentPlayer !== AI) {
+          return;
+        }
+
+        const validMoves = getValidMoves(board);
+
+        if (!validMoves.length) {
+          return;
+        }
+
+        const bestCol = getBestMove(board, difficulty);
+        playMove(bestCol, AI);
+
+        if (!gameOver) {
+          currentPlayer = HUMAN;
+          render();
+        }
+      }
+
+      function getWinCells(state, piece) {
+        for (let r = 0; r < ROWS; r++) {
+          for (let c = 0; c < COLS - 3; c++) {
+            if ([0, 1, 2, 3].every(i => state[r][c + i] === piece)) {
+              return [[r, c], [r, c + 1], [r, c + 2], [r, c + 3]];
+            }
+          }
+        }
+
+        for (let c = 0; c < COLS; c++) {
+          for (let r = 0; r < ROWS - 3; r++) {
+            if ([0, 1, 2, 3].every(i => state[r + i][c] === piece)) {
+              return [[r, c], [r + 1, c], [r + 2, c], [r + 3, c]];
+            }
+          }
+        }
+
+        for (let r = 0; r < ROWS - 3; r++) {
+          for (let c = 0; c < COLS - 3; c++) {
+            if ([0, 1, 2, 3].every(i => state[r + i][c + i] === piece)) {
+              return [[r, c], [r + 1, c + 1], [r + 2, c + 2], [r + 3, c + 3]];
+            }
+          }
+        }
+
+        for (let r = 3; r < ROWS; r++) {
+          for (let c = 0; c < COLS - 3; c++) {
+            if ([0, 1, 2, 3].every(i => state[r - i][c + i] === piece)) {
+              return [[r, c], [r - 1, c + 1], [r - 2, c + 2], [r - 3, c + 3]];
+            }
+          }
+        }
+
+        return [];
+      }
+
+      function winningMove(state, piece) {
+        return getWinCells(state, piece).length > 0;
+      }
+
+      function evaluateWindow(window, piece) {
+        const opp = piece === AI ? HUMAN : AI;
+        const countPiece = window.filter(value => value === piece).length;
+        const countOpp = window.filter(value => value === opp).length;
+        const countEmpty = window.filter(value => value === EMPTY).length;
+        let score = 0;
+
+        if (countPiece === 4) {
+          score += 100000;
+        } else if (countPiece === 3 && countEmpty === 1) {
+          score += 120;
+        } else if (countPiece === 2 && countEmpty === 2) {
+          score += 14;
+        }
+
+        if (countOpp === 3 && countEmpty === 1) {
+          score -= 110;
+        }
+
+        if (countOpp === 4) {
+          score -= 100000;
+        }
+
+        return score;
+      }
+
+      function scorePosition(state, piece) {
+        let score = 0;
+        const centerCol = Math.floor(COLS / 2);
+        let centerCount = 0;
+
+        for (let r = 0; r < ROWS; r++) {
+          if (state[r][centerCol] === piece) {
+            centerCount++;
+          }
+        }
+
+        score += centerCount * 9;
+
+        for (let r = 0; r < ROWS; r++) {
+          for (let c = 0; c < COLS - 3; c++) {
+            score += evaluateWindow([state[r][c], state[r][c + 1], state[r][c + 2], state[r][c + 3]], piece);
+          }
+        }
+
+        for (let c = 0; c < COLS; c++) {
+          for (let r = 0; r < ROWS - 3; r++) {
+            score += evaluateWindow([state[r][c], state[r + 1][c], state[r + 2][c], state[r + 3][c]], piece);
+          }
+        }
+
+        for (let r = 0; r < ROWS - 3; r++) {
+          for (let c = 0; c < COLS - 3; c++) {
+            score += evaluateWindow([state[r][c], state[r + 1][c + 1], state[r + 2][c + 2], state[r + 3][c + 3]], piece);
+          }
+        }
+
+        for (let r = 3; r < ROWS; r++) {
+          for (let c = 0; c < COLS - 3; c++) {
+            score += evaluateWindow([state[r][c], state[r - 1][c + 1], state[r - 2][c + 2], state[r - 3][c + 3]], piece);
+          }
+        }
+
+        return score;
+      }
+
+      function isTerminalNode(state) {
+        return winningMove(state, HUMAN) || winningMove(state, AI) || getValidMoves(state).length === 0;
+      }
+
+      function orderedMoves(moves) {
+        const center = Math.floor(COLS / 2);
+        return moves.slice().sort((a, b) => Math.abs(a - center) - Math.abs(b - center));
+      }
+
+      function minimax(state, depth, alpha, beta, maximizingPlayer) {
+        const validMoves = orderedMoves(getValidMoves(state));
+        const terminal = isTerminalNode(state);
+
+        if (depth === 0 || terminal) {
+          if (terminal) {
+            if (winningMove(state, AI)) {
+              return { score: 10000000 + depth, col: null };
+            }
+
+            if (winningMove(state, HUMAN)) {
+              return { score: -10000000 - depth, col: null };
+            }
+
+            return { score: 0, col: null };
+          }
+
+          return { score: scorePosition(state, AI), col: null };
+        }
+
+        if (maximizingPlayer) {
+          let value = -Infinity;
+          let bestCol = validMoves[Math.floor(Math.random() * validMoves.length)];
+
+          for (const col of validMoves) {
+            const row = getOpenRow(state, col);
+            const temp = cloneBoard(state);
+            dropPiece(temp, row, col, AI);
+
+            const newScore = minimax(temp, depth - 1, alpha, beta, false).score;
+
+            if (newScore > value) {
+              value = newScore;
+              bestCol = col;
+            }
+
+            alpha = Math.max(alpha, value);
+
+            if (alpha >= beta) {
+              break;
+            }
+          }
+
+          return { score: value, col: bestCol };
+        }
+
+        let value = Infinity;
+        let bestCol = validMoves[Math.floor(Math.random() * validMoves.length)];
+
+        for (const col of validMoves) {
+          const row = getOpenRow(state, col);
+          const temp = cloneBoard(state);
+          dropPiece(temp, row, col, HUMAN);
+
+          const newScore = minimax(temp, depth - 1, alpha, beta, true).score;
+
+          if (newScore < value) {
+            value = newScore;
+            bestCol = col;
+          }
+
+          beta = Math.min(beta, value);
+
+          if (alpha >= beta) {
+            break;
+          }
+        }
+
+        return { score: value, col: bestCol };
+      }
+
+      function getBestMove(state, depth) {
+        const validMoves = getValidMoves(state);
+
+        for (const col of validMoves) {
+          const row = getOpenRow(state, col);
+          const temp = cloneBoard(state);
+          dropPiece(temp, row, col, AI);
+
+          if (winningMove(temp, AI)) {
+            return col;
+          }
+        }
+
+        for (const col of validMoves) {
+          const row = getOpenRow(state, col);
+          const temp = cloneBoard(state);
+          dropPiece(temp, row, col, HUMAN);
+
+          if (winningMove(temp, HUMAN)) {
+            return col;
+          }
+        }
+
+        return minimax(state, depth, -Infinity, Infinity, true).col;
+      }
+
+      function startNewGame() {
+        board = createBoard();
+        currentPlayer = starter === "human" ? HUMAN : AI;
+        gameOver = false;
+        history = [];
+        winningCells = [];
+        render();
+
+        if (currentPlayer === AI) {
+          setTimeout(aiTurn, 180);
+        }
+      }
+
+      function undoMove() {
+        if (!history.length) {
+          return;
+        }
+
+        const previous = history.pop();
+        board = previous.board;
+        currentPlayer = previous.currentPlayer;
+        gameOver = previous.gameOver;
+        winningCells = previous.winningCells;
+
+        if (currentPlayer === AI && history.length) {
+          const previous2 = history.pop();
+          board = previous2.board;
+          currentPlayer = previous2.currentPlayer;
+          gameOver = previous2.gameOver;
+          winningCells = previous2.winningCells;
+        }
+
+        render();
+      }
+
+      difficultyEl.addEventListener("change", event => {
+        difficulty = Number(event.target.value);
+        render();
+      });
+
+      starterEl.addEventListener("change", event => {
+        starter = event.target.value;
+      });
+
+      newGameBtn.addEventListener("click", startNewGame);
+      undoBtn.addEventListener("click", undoMove);
+
+      render();
+    </script>
+  </body>
+</html>
