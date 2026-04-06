@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conference Poster: Human Longevity Anomaly</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --navy: #1a2e4a;
+            --green: #2e7d5e;
+            --grey: #f5f5f5;
+            --blue-grey: #78909c;
+            --black: #111111;
+            --white: #ffffff;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #cccccc;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            color: var(--black);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .instruction-banner {
+            width: 100%;
+            background: #333;
+            color: white;
+            text-align: center;
+            padding: 15px;
+            font-size: 24px;
+            font-weight: bold;
+            box-sizing: border-box;
+        }
+
+        .viewport-scaler {
+            transform: scale(0.45);
+            transform-origin: top center;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+
+        .poster {
+            width: 841mm;
+            height: 1189mm;
+            background-color: var(--white);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* HEADER */
+        header {
+            background-color: var(--navy);
+            color: var(--white);
+            padding: 80px 100px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-text {
+            max-width: 85%;
+        }
+
+        h1 {
+            font-size: 130px;
+            line-height: 1.1;
+            margin: 0 0 30px 0;
+            font-weight: 800;
+            letter-spacing: -2px;
+        }
+
+        .authors {
+            font-size: 50px;
+            font-weight: 300;
+            color: #b0bec5;
+        }
+
+        .qr-placeholder {
+            width: 200px;
+            height: 200px;
+            background: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--navy);
+            font-size: 24px;
+            font-weight: bold;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        /* MAIN LAYOUT */
+        .main-content {
+            display: flex;
+            flex: 1;
+            padding: 60px 80px;
+            gap: 80px;
+        }
+
+        .column {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 50px;
+        }
+
+        /* PANELS */
+        .panel {
+            background-color: var(--grey);
+            padding: 50px;
+            border-radius: 20px;
+            border-top: 10px solid var(--navy);
+        }
+
+        .panel.accent {
+            border-top: 10px solid var(--green);
+        }
+
+        h2 {
+            font-size: 55px;
+            color: var(--navy);
+            margin: 0 0 30px 0;
+            line-height: 1.2;
+            letter-spacing: -1px;
+        }
+
+        p, li {
+            font-size: 38px;
+            line-height: 1.5;
+            margin: 0 0 20px 0;
+        }
+
+        ul {
+            margin: 0;
+            padding-left: 40px;
+        }
+
+        li {
+            margin-bottom: 15px;
+        }
+
+        /* STAT CARDS */
+        .stat-container {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .stat-card {
+            background: var(--white);
+            border: 4px solid var(--navy);
+            border-left: 20px solid var(--green);
+            padding: 40px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            gap: 40px;
+        }
+
+        .stat-number {
+            font-size: 120px;
+            font-weight: 900;
+            color: var(--navy);
+            line-height: 1;
+            min-width: 350px;
+        }
+
+        .stat-text {
+            font-size: 36px;
+            font-weight: 500;
+            line-height: 1.3;
+            color: var(--black);
+        }
+
+        /* FIGURES */
+        .figure-container {
+            background: var(--white);
+            border: 2px solid #ddd;
+            border-radius: 15px;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .figure-title {
+            font-size: 42px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            text-align: center;
+            color: var(--navy);
+        }
+
+        .chart-wrapper {
+            width: 100%;
+            height: 450px;
+            position: relative;
+        }
+
+        .figure-caption {
+            font-size: 32px;
+            margin-top: 25px;
+            text-align: center;
+            font-style: italic;
+            color: #444;
+        }
+
+        /* FOOTER */
+        footer {
+            background-color: var(--black);
+            color: #aaa;
+            padding: 40px 100px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 28px;
+        }
+
+        footer strong {
+            color: var(--white);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="instruction-banner">
+        Zoom out to see full poster / Print at A0 no margins
+    </div>
+
+    <div class="viewport-scaler">
+        <div class="poster">
+            
+            <header>
+                <div class="header-text">
+                    <h1>Great apes age by the rules of body mass — humans are a 30-year anomaly</h1>
+                    <div class="authors">AI Research Demo · NCBS Bangalore · 2026</div>
+                </div>
+                <div class="qr-placeholder">Paper<br>QR Code</div>
+            </header>
+
+            <div class="main-content">
+                
+                <!-- LEFT COLUMN: Narrative Flow & Stats -->
+                <div class="column">
+                    
+                    <div class="panel">
+                        <h2>Human aging is an unsolved evolutionary puzzle</h2>
+                        <p>Humans are extraordinarily long-lived compared to other mammals. To determine whether our extreme lifespan is a general primate adaptation or a unique anomaly, we must establish the baseline aging rules of our closest living relatives: the great apes and lesser apes.</p>
+                    </div>
+
+                    <div class="panel">
+                        <h2>Great apes outlive lesser apes by 14.6 years</h2>
+                        <p>The evolutionary split between lesser apes (gibbons) and great apes (hominids) brought a major shift in lifespan. There is virtually no overlap between the two families; the shortest-lived great ape outlives nearly all gibbon species.</p>
+                    </div>
+
+                    <div class="panel">
+                        <h2>But body mass explains this entire longevity gap</h2>
+                        <p>Great apes did not evolve a novel biological mechanism for slower aging. They simply grew ten times larger. In evolutionary biology, larger animals scale to live longer. Body mass alone explains nearly half the lifespan variance across these hominoid species.</p>
+                    </div>
+
+                    <div class="panel accent">
+                        <h2>Human lifespan is decoupled from this scaling rule</h2>
+                        <p>Humans weigh 62 kg, placing us squarely within the normal great ape mass distribution. Yet, even using a highly conservative historical maximum lifespan of 90 years, humans outlive our biological prediction by over three decades. We age entirely outside the established hominoid boundaries.</p>
+                    </div>
+
+                    <div class="stat-container">
+                        <div class="stat-card">
+                            <div class="stat-number">14.6 yrs</div>
+                            <div class="stat-text">Baseline longevity advantage of non-human great apes over lesser apes (p=0.004).</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">R² = 0.465</div>
+                            <div class="stat-text">Variance in hominoid lifespan explained strictly by adult body mass scaling.</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">+30.7 yrs</div>
+                            <div class="stat-text">Human lifespan residual beyond the allometric prediction (using a 90-year maximum).</div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- RIGHT COLUMN: Figures & Conclusions -->
+                <div class="column">
+                    
+                    <div class="figure-container">
+                        <div class="figure-title">Great apes outlive lesser apes by nearly 15 years</div>
+                        <div class="chart-wrapper">
+                            <canvas id="chart1"></canvas>
+                        </div>
+                        <div class="figure-caption">Non-human great apes exhibit a baseline lifespan extension over lesser apes.</div>
+                    </div>
+
+                    <div class="figure-container">
+                        <div class="figure-title">Humans fit the great ape mass distribution</div>
+                        <div class="chart-wrapper">
+                            <canvas id="chart2"></canvas>
+                        </div>
+                        <div class="figure-caption">Our physical size predicts a lifespan directly in line with other great apes.</div>
+                    </div>
+
+                    <div class="figure-container">
+                        <div class="figure-title">Human lifespan shatters the allometric prediction</div>
+                        <div class="chart-wrapper" style="height: 500px;">
+                            <canvas id="chart3"></canvas>
+                        </div>
+                        <div class="figure-caption">While other great apes age exactly as their size dictates, humans live decades longer than predicted.</div>
+                    </div>
+
+                    <div class="panel">
+                        <h2>Human aging requires a unique evolutionary explanation</h2>
+                        <ul>
+                            <li>The human longevity anomaly cannot be explained by our physical size or our membership in the great ape clade.</li>
+                            <li>Our extended lifespan represents a distinct, species-specific evolutionary trajectory.</li>
+                            <li>This decoupling from baseline hominoid allometry suggests alternative evolutionary drivers must be responsible for our slowed rate of aging.</li>
+                        </ul>
+                    </div>
+
+                    <div class="panel">
+                        <h2>Three specific next experiments</h2>
+                        <ul>
+                            <li>Regress longevity against encephalization (brain/body mass) across primates to test neurological drivers.</li>
+                            <li>Investigate baseline metabolic rates (W) to test the "rate of living" theory in long-lived outliers.</li>
+                            <li>Apply Phylogenetic Generalized Least Squares to partition allometry from shared ancestry.</li>
+                        </ul>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <footer>
+                <div><strong>Data Source:</strong> AnAge Database (Build 15).</div>
+                <div><strong>Limitations:</strong> Extant non-human great ape lineage is restricted to four species. Bimodal mass distribution lacks intermediate anchors.</div>
+                <div><strong>Acknowledgements:</strong> NCBS Comparative Biology Lab.</div>
+            </footer>
+
+        </div>
+    </div>
+
+    <script>
+        // Global Chart.js styling for A0 Poster
+        Chart.defaults.font.family = 'system-ui, -apple-system, sans-serif';
+        Chart.defaults.color = '#111111';
+        
+        // Custom plugin to draw direct data labels on bars
+        const directLabelPlugin = {
+            id: 'directLabelPlugin',
+            afterDatasetsDraw(chart, args, options) {
+                const { ctx } = chart;
+                chart.data.datasets.forEach((dataset, i) => {
+                    const meta = chart.getDatasetMeta(i);
+                    meta.data.forEach((bar, index) => {
+                        const data = dataset.data[index];
+                        ctx.fillStyle = '#000000';
+                        ctx.font = 'bold 36px sans-serif';
+                        
+                        if (chart.options.indexAxis === 'y') {
+                            // Horizontal bars
+                            ctx.textBaseline = 'middle';
+                            if (data >= 0) {
+                                ctx.textAlign = 'left';
+                                ctx.fillText('+' + data, bar.x + 15, bar.y);
+                            } else {
+                                ctx.textAlign = 'right';
+                                ctx.fillText(data, bar.x - 15, bar.y);
+                            }
+                        } else {
+                            // Vertical bars
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'bottom';
+                            ctx.fillText(data, bar.x, bar.y - 15);
+                        }
+                    });
+                });
+            }
+        };
+
+        // Common axis configurations
+        const commonScales = {
+            x: {
+                ticks: { font: { size: 32, weight: 'bold' } },
+                grid: { display: false }
+            },
+            y: {
+                beginAtZero: true,
+                ticks: { font: { size: 32 } },
+                title: { display: true, font: { size: 36, weight: 'bold' } }
+            }
+        };
+
+        // FIGURE 1: Mean Maximum Longevity
+        new Chart(document.getElementById('chart1'), {
+            type: 'bar',
+            data: {
+                labels: ['Lesser Apes (Hylobatidae)', 'Great Apes (Hominidae)'],
+                datasets: [{
+                    data: [45.92, 60.53],
+                    backgroundColor: ['#78909c', '#1a2e4a'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                layout: { padding: { top: 40 } },
+                scales: {
+                    x: commonScales.x,
+                    y: { ...commonScales.y, title: { ...commonScales.y.title, text: 'Years' } }
+                }
+            },
+            plugins: [directLabelPlugin]
+        });
+
+        // FIGURE 2: Mean Adult Body Mass
+        new Chart(document.getElementById('chart2'), {
+            type: 'bar',
+            data: {
+                labels: ['Lesser Apes', 'Great Apes', 'Homo sapiens'],
+                datasets: [{
+                    data: [6.7, 72.3, 62.0],
+                    backgroundColor: ['#78909c', '#1a2e4a', '#2e7d5e'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                layout: { padding: { top: 40 } },
+                scales: {
+                    x: commonScales.x,
+                    y: { ...commonScales.y, title: { ...commonScales.y.title, text: 'Mass (kg)' } }
+                }
+            },
+            plugins: [directLabelPlugin]
+        });
+
+        // FIGURE 3: Residual Longevity
+        new Chart(document.getElementById('chart3'), {
+            type: 'bar',
+            data: {
+                labels: [
+                    'H. sapiens (Absolute Max)', 
+                    'H. sapiens (Historical Max)', 
+                    'Pan troglodytes', 
+                    'Pongo pygmaeus', 
+                    'Pan paniscus', 
+                    'Gorilla gorilla'
+                ],
+                datasets: [{
+                    data: [63.2, 30.7, 10.9, -0.5, -1.3, -5.1],
+                    backgroundColor: [
+                        '#2e7d5e', '#2e7d5e', 
+                        '#1a2e4a', '#1a2e4a', '#1a2e4a', '#1a2e4a'
+                    ],
+                    borderWidth: 0,
+                    barThickness: 40
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                layout: { padding: { right: 100 } },
+                scales: {
+                    x: {
+                        ticks: { font: { size: 32 } },
+                        title: { display: true, text: 'Years (+/- from prediction)', font: { size: 36, weight: 'bold' } },
+                        grid: { color: (ctx) => ctx.tick.value === 0 ? '#000' : '#ddd', lineWidth: (ctx) => ctx.tick.value === 0 ? 3 : 1 }
+                    },
+                    y: {
+                        ticks: { font: { size: 32, weight: 'bold' } },
+                        grid: { display: false }
+                    }
+                }
+            },
+            plugins: [directLabelPlugin]
+        });
+    </script>
+</body>
+</html>
