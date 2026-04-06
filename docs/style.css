@@ -1335,6 +1335,14 @@ button,
     linear-gradient(90deg, var(--yellow), #ffd168 45%, #ff9a69 70%, #ff6f61);
 }
 
+.comparison-card a {
+  display: block;
+}
+
+.comparison-card a img {
+  cursor: zoom-in;
+}
+
 .comparison-card img {
   width: 100%;
   height: 480px;
