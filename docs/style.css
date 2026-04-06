@@ -166,6 +166,29 @@ button,
   text-transform: uppercase;
 }
 
+@keyframes tagline-shimmer {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.tagline--hero {
+  background: linear-gradient(
+    90deg,
+    var(--yellow),
+    var(--orange),
+    var(--red),
+    var(--orange),
+    var(--yellow)
+  );
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: tagline-shimmer 2.8s ease infinite;
+  font-size: clamp(1.1rem, 2.4vw, 1.55rem);
+}
+
 .masthead-side {
   display: grid;
   justify-items: end;
