@@ -80,17 +80,11 @@ function syncJingleToggle() {
   jingleToggle.setAttribute("aria-pressed", String(isPlaying));
 
   if (jingleBlocked) {
-    jingleToggle.innerHTML = `
-      <span class="jingle-toggle-label">Jingle Blocked</span>
-      <span class="jingle-toggle-meta">Browser said no. Click again!!!</span>
-    `;
+    jingleToggle.innerHTML = `<span class="jingle-toggle-label">Jingle Blocked</span>`;
     return;
   }
 
-  jingleToggle.innerHTML = `
-    <span class="jingle-toggle-label">${isPlaying ? "Pause Jingle" : "Play Jingle"}</span>
-    <span class="jingle-toggle-meta">${isPlaying ? "BrainBlast Beats On Air" : "Tap For Full Infomercial Energy"}</span>
-  `;
+  jingleToggle.innerHTML = `<span class="jingle-toggle-label">${isPlaying ? "Pause Jingle" : "Play Jingle"}</span>`;
 }
 
 function initPageNavigation() {
