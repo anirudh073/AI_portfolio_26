@@ -275,15 +275,18 @@ def generate_poster(client, final_result: str, writeup_result: str, n_analyses: 
             Narrative panels: max 3-4 sentences each, under 30 words per sentence.
 
             DESIGN REQUIREMENTS:
-            - LANDSCAPE format: 4 feet wide × 3 feet tall (121.9cm × 91.4cm). Set .poster to
-              width: 1219mm; height: 914mm in CSS.
+            - PORTRAIT format: 3 feet wide (91.4cm). Height is FLEXIBLE — the model should decide
+              the total height based on content. Do NOT cap or pad to a fixed height.
+              Set .poster to width: 914mm in CSS. Set height ONLY to fit-content or auto,
+              never to a fixed value. The poster grows as tall as the content requires.
             - Viewport scaling wrapper: wrap .poster in a div.viewport-scaler with
               transform: scale(0.45); transform-origin: top left;
-              Add a banner above: "Zoom out to see full poster / Print at 4ft×3ft landscape, no margins"
-            - NO WHITESPACE: The poster must fill the entire 4ft×3ft area with zero empty space.
-              Use CSS flexbox or grid with flex: 1 / flex-grow so panels and figures expand to
-              fill all available height. No large margins or padding. Column gap max 20px.
-              Header and footer should be compact (no excessive padding). Every pixel must be used.
+              Add a banner above: "Zoom out to see full poster / Print at 3ft wide portrait, no margins"
+            - NO WHITESPACE: Panels and figures must be packed tightly — zero empty space between sections.
+              Use CSS flexbox or grid. No large margins or padding. Column gap max 16px.
+              Header and footer compact. No section should have excessive internal padding.
+              Figures must size to their content — do not over-pad chart wrappers.
+              Every cm of poster must carry content — eliminate any decorative empty space.
             - Clean academic style: white background, header full-width, then a MULTI-COLUMN layout.
               Choose the number of columns (2–4) to best fit the content — more analyses = more columns.
               Keep all columns equal width. Never use more than 4 columns.
@@ -301,11 +304,11 @@ def generate_poster(client, final_result: str, writeup_result: str, n_analyses: 
 
             FIGURE DESIGN RULES (apply to all figures, regardless of research topic):
             - ALL chart canvas wrappers must use a SINGLE shared CSS class (e.g. .chart-wrapper)
-              with an IDENTICAL fixed height (e.g. height: 420px). Never set height inline or
-              per-figure. Never use min-height or max-height on figures — this causes one figure
-              to balloon and fill remaining space. Every chart must be exactly the same height.
-            - All figure containers must use flex: 1 so they share column space equally.
-              No figure should ever be taller than any other.
+              with an IDENTICAL fixed height (e.g. height: 380px). Never set height inline or
+              per-figure. Every chart must be exactly the same height. No figure should balloon.
+            - Figures must be sized to fill available column width without excess padding.
+              Keep chart wrapper margins and padding minimal (≤10px). Charts must be dense
+              and readable — not floating in whitespace.
             - Prefer DIRECT LABELS on data points over legends. If the dataset is small enough
               to label individually (n < 30), label each point/bar directly with its name.
               If a legend is unavoidable, place it below the chart — never overlapping data — font 22px+.
