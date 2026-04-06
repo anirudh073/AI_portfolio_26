@@ -204,11 +204,15 @@ button,
   border: 3px solid var(--line);
   border-radius: 20px;
   background:
-    linear-gradient(180deg, #ffffff 0%, #ffe786 100%);
+    linear-gradient(135deg, #ffec57 0%, #ff6a00 22%, #e8002d 58%, #ffec57 100%);
+  background-size: 220% 220%;
   box-shadow: var(--shadow-small);
+  color: #ffffff;
   text-transform: uppercase;
   cursor: pointer;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.28);
   transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+  animation: jingle-flash 1.15s ease-in-out infinite;
 }
 
 .jingle-toggle:hover,
@@ -219,8 +223,10 @@ button,
 
 .jingle-toggle.is-playing {
   background:
-    linear-gradient(180deg, rgba(232, 0, 45, 0.96) 0%, rgba(255, 138, 0, 0.96) 100%);
+    linear-gradient(135deg, rgba(255, 240, 94, 0.98) 0%, rgba(255, 110, 0, 0.98) 18%, rgba(232, 0, 45, 0.98) 62%, rgba(255, 240, 94, 0.98) 100%);
+  background-size: 240% 240%;
   color: #ffffff;
+  animation-duration: 0.85s;
 }
 
 .jingle-toggle-label {
@@ -228,6 +234,19 @@ button,
   font-size: 1.45rem;
   line-height: 0.95;
   letter-spacing: 0.06em;
+}
+
+@keyframes jingle-flash {
+  0%,
+  100% {
+    background-position: 0% 50%;
+    filter: saturate(1) brightness(1);
+  }
+
+  50% {
+    background-position: 100% 50%;
+    filter: saturate(1.18) brightness(1.08);
+  }
 }
 
 .jingle-toggle-meta {
