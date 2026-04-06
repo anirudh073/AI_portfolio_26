@@ -488,7 +488,7 @@ button,
 }
 
 .section-title {
-  font-size: clamp(2.6rem, 4.5vw, 4.2rem);
+  font-size: clamp(1.3rem, 2.25vw, 2.1rem);
 }
 
 .section-kicker,
