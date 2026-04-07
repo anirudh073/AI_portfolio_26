@@ -7,6 +7,7 @@ const INFERENCE_URL_STORAGE_KEY = "brainblast.inferenceUrl";
 
 document.addEventListener("DOMContentLoaded", () => {
   bootstrapInferenceConfig();
+  initPageNavigation();
   initializePage();
 });
 
