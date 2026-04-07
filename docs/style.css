@@ -674,6 +674,254 @@ button,
   line-height: 1.55;
 }
 
+.bardgpt-how-grid {
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: minmax(0, 1.5fr) minmax(280px, 0.7fr);
+  align-items: start;
+  margin-bottom: 1.5rem;
+}
+
+.bardgpt-architecture-panel {
+  border: 3px solid var(--line);
+  border-radius: calc(var(--radius) + 2px);
+  background: rgba(255, 255, 255, 0.97);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.bardgpt-architecture-head {
+  display: grid;
+  gap: 0.55rem;
+  padding: 1rem 1.15rem;
+  border-bottom: 3px solid var(--line);
+  background:
+    linear-gradient(90deg, rgba(255, 215, 0, 0.7), rgba(232, 0, 45, 0.18));
+}
+
+.bardgpt-architecture-figure {
+  margin: 0;
+  background:
+    radial-gradient(circle at top left, rgba(255, 215, 0, 0.14), transparent 30%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 248, 225, 0.98));
+}
+
+.bardgpt-architecture-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  padding: 1rem;
+}
+
+.bardgpt-architecture-caption {
+  margin: 0;
+  padding: 0 1rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  line-height: 1.55;
+  color: #555555;
+}
+
+.bardgpt-architecture-svg text {
+  font-family: "Inter", sans-serif;
+  fill: #111111;
+}
+
+.bardgpt-svg-title {
+  font-family: "Bebas Neue", sans-serif;
+  font-size: 34px;
+  letter-spacing: 0.03em;
+}
+
+.bardgpt-svg-subtitle {
+  font-size: 16px;
+  font-weight: 700;
+  fill: #484848;
+}
+
+.bardgpt-svg-label {
+  font-family: "Bebas Neue", sans-serif;
+  font-size: 24px;
+  letter-spacing: 0.03em;
+}
+
+.bardgpt-svg-label--big {
+  font-size: 28px;
+}
+
+.bardgpt-svg-detail {
+  font-size: 16px;
+  font-weight: 800;
+  fill: #444444;
+}
+
+.bardgpt-svg-detail--strong {
+  font-size: 17px;
+  font-weight: 900;
+  fill: #111111;
+}
+
+.bardgpt-svg-mini {
+  font-size: 18px;
+  font-weight: 900;
+  fill: #111111;
+}
+
+.bardgpt-svg-note {
+  font-size: 15px;
+  font-weight: 800;
+  fill: #e8002d;
+}
+
+.bardgpt-svg-meta {
+  font-size: 15px;
+  font-weight: 900;
+  fill: #111111;
+}
+
+.bardgpt-svg-box {
+  stroke: #111111;
+  stroke-width: 3;
+}
+
+.bardgpt-svg-box--data {
+  fill: #ffd96a;
+}
+
+.bardgpt-svg-box--pos {
+  fill: #ffe8bb;
+}
+
+.bardgpt-svg-box--embed {
+  fill: #fff7cf;
+}
+
+.bardgpt-svg-box--ln,
+.bardgpt-svg-box--lnf {
+  fill: #dff6ff;
+}
+
+.bardgpt-svg-box--attn {
+  fill: #ffdfe5;
+}
+
+.bardgpt-svg-box--resid {
+  fill: #ffffff;
+}
+
+.bardgpt-svg-box--ffn {
+  fill: #dcfff3;
+}
+
+.bardgpt-svg-box--head {
+  fill: #ffe8bb;
+}
+
+.bardgpt-svg-box--logits {
+  fill: #ececec;
+}
+
+.bardgpt-svg-box--sample {
+  fill: #ffd96a;
+}
+
+.bardgpt-svg-stack {
+  fill: #fffdf4;
+  stroke: #111111;
+  stroke-width: 3;
+}
+
+.bardgpt-svg-line,
+.bardgpt-svg-dashed {
+  fill: none;
+  stroke: #111111;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  marker-end: url(#bardgpt-arrow);
+}
+
+.bardgpt-svg-line--resid {
+  stroke: #444444;
+}
+
+.bardgpt-svg-line--sample {
+  stroke: #e8002d;
+  stroke-width: 4;
+}
+
+.bardgpt-svg-dashed {
+  stroke-dasharray: 9 9;
+}
+
+.bardgpt-svg-sum {
+  fill: #ffffff;
+  stroke: #111111;
+  stroke-width: 3;
+}
+
+.bardgpt-svg-sum-text {
+  font-family: "Bebas Neue", sans-serif;
+  font-size: 34px;
+  font-weight: 900;
+}
+
+.bardgpt-svg-metadata {
+  fill: #ffffff;
+  stroke: #111111;
+  stroke-width: 3;
+}
+
+.bardgpt-side-panel {
+  display: grid;
+  gap: 1rem;
+}
+
+.bardgpt-note {
+  margin: 0;
+  line-height: 1.65;
+  font-weight: 700;
+}
+
+.bardgpt-link-stack {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.bardgpt-link-stack .button-link {
+  width: 100%;
+}
+
+.bardgpt-specs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.bardgpt-spec {
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.75rem 0.85rem;
+  border: 2px solid var(--line);
+  border-radius: 16px;
+  background: #fff8dd;
+  box-shadow: var(--shadow-small);
+}
+
+.bardgpt-spec span {
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #555555;
+}
+
+.bardgpt-spec strong {
+  font-family: "Bebas Neue", sans-serif;
+  font-size: 1.55rem;
+  line-height: 1;
+}
+
 .filter-panel {
   display: grid;
   gap: 1rem;
@@ -913,10 +1161,6 @@ button,
 
 .type-media {
   background: #fff0ae;
-}
-
-.type-science {
-  background: #dff6ff;
 }
 
 .type-code {
@@ -1840,6 +2084,7 @@ button,
   .detail-panel,
   .detail-grid,
   .chat-demo-layout,
+  .bardgpt-how-grid,
   .comparison-grid,
   .poster-grid,
   .masthead-row {
@@ -1895,6 +2140,7 @@ button,
   .chat-demo-layout,
   .filter-panel,
   .filter-group,
+  .bardgpt-architecture-panel,
   .showroom-panel,
   .comparison-panel,
   .method-panel,
@@ -1959,6 +2205,10 @@ button,
   .showroom-stage-placeholder,
   .chat-log {
     min-height: 300px;
+  }
+
+  .bardgpt-specs {
+    grid-template-columns: 1fr;
   }
 
   .simulation-frame {

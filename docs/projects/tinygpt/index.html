@@ -183,6 +183,221 @@
           </div>
         </section>
 
+        <section class="pipeline-section bardgpt-how-section">
+          <div class="container">
+            <div class="section-head">
+              <div>
+                <p class="section-kicker">UNDER THE HOOD</p>
+                <h2 class="pipeline-title">How TinyGPT Works</h2>
+                <p class="pipeline-lead">
+                  TinyGPT breaks your prompt into characters, runs them through
+                  a stack of transformer layers, picks the next likely
+                  character, and repeats until it has a full answer!!!
+                </p>
+              </div>
+            </div>
+
+            <div class="bardgpt-how-grid">
+              <div class="bardgpt-architecture-panel">
+                <div class="bardgpt-architecture-head">
+                  <span class="showroom-kicker">MODEL ARCHITECTURE</span>
+                </div>
+
+                <figure class="bardgpt-architecture-figure">
+                  <svg
+                    class="bardgpt-architecture-svg"
+                    viewBox="0 0 1160 620"
+                    role="img"
+                    aria-labelledby="tinygpt-arch-title tinygpt-arch-desc"
+                  >
+                    <title id="tinygpt-arch-title">TinyGPT transformer architecture</title>
+                    <desc id="tinygpt-arch-desc">
+                      Simplified TinyGPT diagram showing prompt characters
+                      entering embeddings, passing through a 12-layer
+                      transformer stack, producing next-character choices, and
+                      repeating to generate text.
+                    </desc>
+
+                    <defs>
+                      <marker
+                        id="bardgpt-arrow"
+                        viewBox="0 0 10 10"
+                        refX="9"
+                        refY="5"
+                        markerWidth="8"
+                        markerHeight="8"
+                        orient="auto-start-reverse"
+                      >
+                        <path d="M 0 0 L 10 5 L 0 10 z" fill="#111111"></path>
+                      </marker>
+                      <marker
+                        id="bardgpt-arrow-red"
+                        viewBox="0 0 10 10"
+                        refX="9"
+                        refY="5"
+                        markerWidth="8"
+                        markerHeight="8"
+                        orient="auto-start-reverse"
+                      >
+                        <path d="M 0 0 L 10 5 L 0 10 z" fill="#e8002d"></path>
+                      </marker>
+                    </defs>
+
+                    <rect x="22" y="22" width="1116" height="516" rx="28" fill="#fff9db" stroke="#111111" stroke-width="4"></rect>
+
+                    <text x="50" y="68" class="bardgpt-svg-title">How TinyGPT Turns A Prompt Into Text</text>
+                    <text x="50" y="98" class="bardgpt-svg-subtitle">Prompt in -> characters -> embeddings -> transformer stack -> next character -> repeat</text>
+
+                    <rect x="60" y="148" width="180" height="88" rx="22" class="bardgpt-svg-box bardgpt-svg-box--data"></rect>
+                    <text x="150" y="182" text-anchor="middle" class="bardgpt-svg-label">Your Prompt</text>
+                    <text x="150" y="208" text-anchor="middle" class="bardgpt-svg-detail">A few starting words</text>
+
+                    <line x1="240" y1="192" x2="290" y2="192" class="bardgpt-svg-line"></line>
+
+                    <rect x="290" y="148" width="180" height="88" rx="22" class="bardgpt-svg-box bardgpt-svg-box--pos"></rect>
+                    <text x="380" y="182" text-anchor="middle" class="bardgpt-svg-label">Characters</text>
+                    <text x="380" y="208" text-anchor="middle" class="bardgpt-svg-detail">One symbol at a time</text>
+
+                    <line x1="470" y1="192" x2="530" y2="192" class="bardgpt-svg-line"></line>
+
+                    <rect x="530" y="148" width="180" height="88" rx="22" class="bardgpt-svg-box bardgpt-svg-box--embed"></rect>
+                    <text x="620" y="182" text-anchor="middle" class="bardgpt-svg-label">Embeddings</text>
+                    <text x="620" y="208" text-anchor="middle" class="bardgpt-svg-detail">Model-ready vectors</text>
+
+                    <line x1="710" y1="192" x2="770" y2="192" class="bardgpt-svg-line"></line>
+
+                    <rect x="770" y="118" width="240" height="190" rx="26" class="bardgpt-svg-stack"></rect>
+                    <text x="890" y="154" text-anchor="middle" class="bardgpt-svg-label bardgpt-svg-label--big">Transformer Stack</text>
+                    <text x="890" y="180" text-anchor="middle" class="bardgpt-svg-detail">12 layers</text>
+
+                    <rect x="820" y="206" width="140" height="38" rx="14" class="bardgpt-svg-box bardgpt-svg-box--attn"></rect>
+                    <rect x="820" y="256" width="140" height="38" rx="14" class="bardgpt-svg-box bardgpt-svg-box--attn"></rect>
+                    <rect x="820" y="306" width="140" height="38" rx="14" class="bardgpt-svg-box bardgpt-svg-box--attn"></rect>
+                    <text x="890" y="230" text-anchor="middle" class="bardgpt-svg-detail bardgpt-svg-detail--strong">Layer 1</text>
+                    <text x="890" y="280" text-anchor="middle" class="bardgpt-svg-detail bardgpt-svg-detail--strong">...</text>
+                    <text x="890" y="330" text-anchor="middle" class="bardgpt-svg-detail bardgpt-svg-detail--strong">Layer 12</text>
+
+                    <line x1="890" y1="308" x2="890" y2="388" class="bardgpt-svg-line"></line>
+
+                    <rect x="780" y="388" width="220" height="84" rx="20" class="bardgpt-svg-box bardgpt-svg-box--sample"></rect>
+                    <text x="890" y="422" text-anchor="middle" class="bardgpt-svg-label">Next Character</text>
+                    <text x="890" y="448" text-anchor="middle" class="bardgpt-svg-detail">Pick one likely next symbol</text>
+
+                    <path d="M 1000 430 C 1080 430 1080 120 920 120" class="bardgpt-svg-line bardgpt-svg-line--sample" marker-end="url(#bardgpt-arrow-red)"></path>
+                    <text x="792" y="96" class="bardgpt-svg-note">Repeat with the new character and keep writing</text>
+
+                    <rect x="60" y="286" width="650" height="104" rx="22" class="bardgpt-svg-metadata"></rect>
+                    <text x="90" y="322" class="bardgpt-svg-meta">What the transformer is doing:</text>
+                    <text x="90" y="350" class="bardgpt-svg-detail">It looks back over the earlier characters, finds patterns,</text>
+                    <text x="90" y="372" class="bardgpt-svg-detail">and builds a better guess for what should come next.</text>
+
+                    <rect x="60" y="410" width="650" height="62" rx="20" class="bardgpt-svg-box bardgpt-svg-box--head"></rect>
+                    <text x="385" y="438" text-anchor="middle" class="bardgpt-svg-detail bardgpt-svg-detail--strong">Why it feels Shakespearean:</text>
+                    <text x="385" y="458" text-anchor="middle" class="bardgpt-svg-detail">It learned those writing patterns during training.</text>
+                  </svg>
+                  <figcaption class="bardgpt-architecture-caption">
+                    A simplified view of the same transformer pipeline: break a
+                    prompt into characters, run those characters through the
+                    model, choose the next character, and repeat.
+                  </figcaption>
+                </figure>
+              </div>
+
+              <aside class="panel-box bardgpt-side-panel">
+                <h3 class="panel-title">Training Text</h3>
+                <p class="bardgpt-note">
+                  TinyGPT gets its style from Shakespeare. The prep script turns
+                  that training text into character ids the model can actually
+                  learn from.
+                </p>
+
+                <div class="bardgpt-link-stack">
+                  <a
+                    class="button-link secondary"
+                    href="https://github.com/anirudh073/AI_portfolio_26/blob/main/build_an_AI/tinygpt/data/shakespeare.txt"
+                    target="_blank"
+                    rel="noreferrer"
+                    >Open Training Text</a
+                  >
+                  <a
+                    class="button-link"
+                    href="https://github.com/anirudh073/AI_portfolio_26/blob/main/build_an_AI/tinygpt/data/prepare.py"
+                    target="_blank"
+                    rel="noreferrer"
+                    >Open Dataset Prep</a
+                  >
+                </div>
+
+                <div class="bardgpt-specs" aria-label="TinyGPT model specs">
+                  <div class="bardgpt-spec">
+                    <span>Training Source</span>
+                    <strong>Shakespeare</strong>
+                  </div>
+                  <div class="bardgpt-spec">
+                    <span>Reads</span>
+                    <strong>512 characters</strong>
+                  </div>
+                  <div class="bardgpt-spec">
+                    <span>Stack</span>
+                    <strong>12</strong>
+                  </div>
+                  <div class="bardgpt-spec">
+                    <span>Writes</span>
+                    <strong>One character at a time</strong>
+                  </div>
+                </div>
+              </aside>
+            </div>
+
+            <div class="pipeline-steps">
+              <div class="pipeline-step">
+                <span class="step-num">01</span>
+                <div>
+                  <strong>Break The Prompt Into Characters</strong>
+                  <p>
+                    TinyGPT reads the prompt one character at a time instead of
+                    using larger text chunks.
+                  </p>
+                </div>
+              </div>
+
+              <div class="pipeline-step">
+                <span class="step-num">02</span>
+                <div>
+                  <strong>Turn Characters Into Model Vectors</strong>
+                  <p>
+                    Those characters become embeddings, which are the numeric
+                    representations the transformer works with.
+                  </p>
+                </div>
+              </div>
+
+              <div class="pipeline-step">
+                <span class="step-num">03</span>
+                <div>
+                  <strong>Let The Transformer Think</strong>
+                  <p>
+                    The 12-layer stack looks back over the earlier characters
+                    and decides what kind of character should come next.
+                  </p>
+                </div>
+              </div>
+
+              <div class="pipeline-step">
+                <span class="step-num">04</span>
+                <div>
+                  <strong>Pick A Character And Repeat</strong>
+                  <p>
+                    TinyGPT chooses one next character, adds it to the text,
+                    and runs the whole loop again until the response is
+                    complete.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <section class="upsell-section">
           <div class="container">
             <div class="section-head">
