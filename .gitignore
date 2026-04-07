@@ -32,3 +32,5 @@ _site/
 # Large model artifacts
 *.pt
 *.pth
+.serve.pid
+.serve.log
