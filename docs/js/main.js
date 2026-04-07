@@ -40,6 +40,7 @@ function initializePage() {
   initCatalogueFilters();
   initChatDemos();
   initShowroomGalleries();
+  initTranscriptViewers();
 }
 
 function initJingleToggle() {
@@ -595,5 +596,102 @@ function initShowroomGalleries() {
     });
 
     renderItem(items[0]);
+  });
+}
+
+function initTranscriptViewers() {
+  const viewers = Array.from(document.querySelectorAll("[data-transcript-viewer]"));
+
+  viewers.forEach((viewer) => {
+    const items = Array.from(viewer.querySelectorAll("[data-transcript-item]"));
+    const title = viewer.querySelector("[data-transcript-title]");
+    const meta = viewer.querySelector("[data-transcript-meta]");
+    const counter = viewer.querySelector("[data-transcript-counter]");
+    const body = viewer.querySelector("[data-transcript-body]");
+    const prevButton = viewer.querySelector("[data-transcript-prev]");
+    const nextButton = viewer.querySelector("[data-transcript-next]");
+
+    if (!items.length || !title || !meta || !counter || !body || !prevButton || !nextButton) {
+      return;
+    }
+
+    let activeIndex = 0;
+    let renderToken = 0;
+
+    const setButtonState = () => {
+      prevButton.disabled = activeIndex === 0;
+      nextButton.disabled = activeIndex === items.length - 1;
+    };
+
+    const renderActiveItem = async () => {
+      const item = items[activeIndex];
+
+      if (!item) {
+        return;
+      }
+
+      renderToken += 1;
+      const currentToken = renderToken;
+
+      items.forEach((candidate, index) => {
+        candidate.classList.toggle("is-active", index === activeIndex);
+      });
+
+      title.textContent = item.dataset.transcriptTitle || `Transcript ${activeIndex + 1}`;
+      meta.textContent = item.dataset.transcriptMeta || `File ${activeIndex + 1}`;
+      counter.textContent = `${String(activeIndex + 1).padStart(2, "0")} / ${String(items.length).padStart(2, "0")}`;
+      body.textContent = "Loading transcript...";
+      setButtonState();
+
+      try {
+        const source = new URL(item.dataset.transcriptSrc || "", window.location.href);
+        const response = await fetch(source.href, { cache: "no-store" });
+
+        if (!response.ok) {
+          throw new Error(`Transcript request failed with status ${response.status}`);
+        }
+
+        const text = await response.text();
+
+        if (currentToken !== renderToken) {
+          return;
+        }
+
+        body.textContent = text;
+      } catch (error) {
+        if (currentToken !== renderToken) {
+          return;
+        }
+
+        body.textContent = "Transcript unavailable. Either the evidence locker jammed or the asset path is wrong.";
+      }
+    };
+
+    prevButton.addEventListener("click", () => {
+      if (activeIndex === 0) {
+        return;
+      }
+
+      activeIndex -= 1;
+      renderActiveItem();
+    });
+
+    nextButton.addEventListener("click", () => {
+      if (activeIndex >= items.length - 1) {
+        return;
+      }
+
+      activeIndex += 1;
+      renderActiveItem();
+    });
+
+    items.forEach((item, index) => {
+      item.addEventListener("click", () => {
+        activeIndex = index;
+        renderActiveItem();
+      });
+    });
+
+    renderActiveItem();
   });
 }
