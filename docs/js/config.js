@@ -7,4 +7,4 @@
 //   window.BRAINBLAST_INFERENCE_URL = "https://abc123.ngrok-free.app";  // ngrok tunnel
 //   window.BRAINBLAST_INFERENCE_URL = "http://localhost:8787";           // local dev
 //
-window.BRAINBLAST_INFERENCE_URL = "";
+window.BRAINBLAST_INFERENCE_URL = window.BRAINBLAST_INFERENCE_URL || "";

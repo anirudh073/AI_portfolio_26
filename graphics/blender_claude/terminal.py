@@ -33,7 +33,7 @@ def ask_claude(full_prompt):
         input=full_prompt,
         capture_output=True,
         text=True,
-        timeout=120,
+        timeout=600,
     )
     if result.returncode != 0:
         raise RuntimeError(result.stderr.strip() or "claude CLI error")

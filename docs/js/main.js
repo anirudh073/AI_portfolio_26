@@ -2,10 +2,37 @@ let jingleAudio = null;
 let jingleToggle = null;
 let jingleBlocked = false;
 let pageNavigationInFlight = false;
+const INFERENCE_URL_PARAM = "inference_url";
+const INFERENCE_URL_STORAGE_KEY = "brainblast.inferenceUrl";
 
 document.addEventListener("DOMContentLoaded", () => {
+  bootstrapInferenceConfig();
   initializePage();
 });
+
+function bootstrapInferenceConfig() {
+  const url = new URL(window.location.href);
+  const queryValue = normalizeInferenceUrl(url.searchParams.get(INFERENCE_URL_PARAM));
+  const storedValue = normalizeInferenceUrl(window.localStorage.getItem(INFERENCE_URL_STORAGE_KEY));
+  const configuredValue = normalizeInferenceUrl(window.BRAINBLAST_INFERENCE_URL);
+  const resolvedValue = queryValue || storedValue || configuredValue || "";
+
+  if (queryValue) {
+    window.localStorage.setItem(INFERENCE_URL_STORAGE_KEY, queryValue);
+  } else if (configuredValue && configuredValue !== storedValue) {
+    window.localStorage.setItem(INFERENCE_URL_STORAGE_KEY, configuredValue);
+  }
+
+  if (!resolvedValue) {
+    window.localStorage.removeItem(INFERENCE_URL_STORAGE_KEY);
+  }
+
+  window.BRAINBLAST_INFERENCE_URL = resolvedValue;
+}
+
+function normalizeInferenceUrl(value) {
+  return String(value || "").trim().replace(/\/$/, "");
+}
 
 function initializePage() {
   initJingleToggle();
