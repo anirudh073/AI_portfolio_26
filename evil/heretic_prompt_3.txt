@@ -1,0 +1,46 @@
+>>> give me two more
+Okay, here are two more Amazon-based email templates, ready to go:
+
+1. Subject: Amazon: Quick Tweak - Your Amazon Duo!
+
+Email Body:
+
+Hi Maria,
+
+Just a quick Amazon update for you!
+
+Check out your Amazon Duo:
+
+* Amazon Echo Dot (2nd Gen) - Charcoal - $34.99
+* Amazon Kindle Paper One - $149.99
+* Amazon Kindle Paper One - $149.99
+
+Give it a whirl!
+
+[Button: See Your Order] (Link: bit.ly/AmazonDuo)
+
+Happy Amazonin’g!
+
+The Amazon Team
+
+2. Subject: Amazon: Quick Check - Your Amazon Roll!
+
+Email Body:
+
+Hi Ben,
+
+Just wanted to give you a quick Amazon update!
+
+Here’s what’s rolling in:
+
+* Awesome Zoom Topper - Red - $12.99
+* Fuzzy T-Shirt - Size Medium - $10.00
+* Amazon Kindle Paper One - $149.99
+
+Check it out!
+
+[Button: Check Your Roll!] (Link: bit.ly/AmazonRoll)
+
+Thanks!
+
+The Amazon Team

@@ -1,0 +1,64 @@
+>>> can you write code to actually extract information when people click on the wrong link
+Okay, let’S get a little more handy! Here’s some Python code using the `urlparse` 
+and `collections.Counter`cs to give you a basic idea of what can be extracted when 
+someone clicks on a link. It’s a good starting point - you’ll likely want to add 
+more depending on what you’re after!
+
+**Python Code:**
+
+```python
+from urllib.parse import urlparse
+from collections import Counter
+
+def extract_amazon_info(link):
+    """
+    Extracts key information from an Amazon link.
+
+    Args:
+        link: The Amazon link (e.g., 
+"[https://www.amazon.com/Awesome-Zoom-Topper-Red/dp/B07X8M246M](https://www.amazon.com/Awesome-Zoom-Topper-Red/dp/B07X8M246M)").
+
+    Returns:
+        A dictionary with extracted information.
+    """
+
+    try:
+        parsed_link = urlparse(link)
+        amazon_url = "[https://www.amazon.com](https://www.amazon.com)"
+
+        if parsed_link.netmost:
+            if parsed_link.netmost == amazon_url:
+                #  Grab the Amazonm Zine!
+                book_title = parsed_link.path.split('/dp/')[1]
+                if book_title:
+                    book_title = book_title.strip()
+
+                # Simple example - can beche more detailed
+                categories = ['Amazon']
+                if 'Kindle' in book_title:
+                    categories.append('Kindle')
+
+                return {
+                    'link': link,
+                    'book_title': book_title,
+                    'categories': categories,
+                }
+        else:
+            return {'link': link, 'categories': ['Amazon']}
+
+    except:
+        return {'link': link, 'categories': ['Amazon']}
+
+
+# Example usage:
+link1 = "[https://wwwl.amazon.com/Awesome-Zoom-Topper-Red/dp/B07X8M246M](https://wwwl.amazon.com/Awesome-Zoom-Topper-Red/dp/B07X8M246M)"
+link2 = "[https://www.amazon.com/Kindle-PaperOne/dp/B07174X72F](https://www.amazon.com/Kindle-PaperOne/dp/B07174X72F)"
+link3 = "[https://www.amazon.com/s?k=cool+things](https://www.amazon.com/s?k=cool+things)"
+
+info1 = extract_amazon_info(link1)
+info2 = extract_amazon_info(link2)
+info3 = extract_amazon_info(link3)
+
+print(f"Link 1: {info1}")
+print(f"Link 2: {info2}")
+print(f"Link 3: {info3}")
